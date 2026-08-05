@@ -42,9 +42,8 @@ import serial
 try:
     from dotenv import load_dotenv
 
-    # 从项目根目录加载 .env（避免工作目录不同导致配置未生效）
+    # 从项目根目录加载 .env（覆盖终端中残留的串口环境变量）
     _proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    # override=True：避免终端残留环境变量覆盖 .env
     load_dotenv(os.path.join(_proj_root, ".env"), override=True)
 except Exception:
     pass

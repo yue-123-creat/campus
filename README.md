@@ -28,12 +28,8 @@ python app.py
 
 若使用 Flask 命令行启动，请将监听地址设为「所有网卡」并指定端口，以便局域网与其它终端访问（具体参数见 Flask 文档）。
 
-- 默认管理员账号：`admin`（演示密码见 [docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md)）
-
-## 公开仓库与脱敏说明
-
-本仓库已做开源脱敏处理：**真实密钥、业务数据库、上传文件、本地路径** 均不纳入版本控制。  
-部署前请阅读 [docs/PUBLIC_RELEASE.md](docs/PUBLIC_RELEASE.md)，复制 `.env.example` 为 `.env` 并填写你自己的配置。
+- 默认管理员账号：`admin`
+- 默认密码：`admin123`
 
 ## 内网穿透（如 cpolar）
 
@@ -53,17 +49,19 @@ python seed_mock_data.py --clear
 
 ## 环境变量（可选）
 
-复制 `.env.example` 为 `.env` 后按需填写（**勿将密钥提交到版本库**）。
+复制 `.env.example` 为 `.env` 后按需填写（**勿将密钥提交到版本库**）。公开仓库说明见 [`docs/PUBLIC_RELEASE.md`](docs/PUBLIC_RELEASE.md)。
 
 - `SECRET_KEY`
 - `DATABASE_PATH`（默认 `data/campus_safety.db`）
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
+- `ADMIN_USERNAME` / `ADMIN_PASSWORD`（生产环境务必修改）
+- `DATABASE_BACKEND`（`sqlite` 或 `mysql`）
+- 各硬件上传 `*_API_KEY`、`HARDWARE_INGEST_TOKEN`（见 `.env.example`）
 - `LLM_API_KEY`（为空时自动使用本地规则引擎）
-- `LLM_BASE_URL`
-- `LLM_MODEL`
-- **硬件统一上报鉴权（可选）**：`HARDWARE_INGEST_TOKEN` — 若设置，则 `POST /api/hardware/data` 须带请求头 `X-Hardware-Token` 或 `Authorization: Bearer …`。
-- **平台级 AI（豆包，仅平台后端）**：`DOUBAO_API_KEY`、`DOUBAO_MODEL_ID`（默认 `doubao-seed-2-0-lite-260215`）、`DOUBAO_API_ENDPOINT`（默认火山方舟 Responses URL）。与硬件接口完全隔离，见 `docs/PLATFORM_HARDWARE_AI.md`。
+- **平台级 AI（豆包）**：`DOUBAO_API_KEY`、`DOUBAO_MODEL_ID`、`DOUBAO_API_ENDPOINT`
+
+### 演示账号（本地开发）
+
+首次启动会自动创建 `admin`、`teacher01`、`student01`、`security01` 四个演示账号，默认密码见 `docs/PUBLIC_RELEASE.md`。**上线前请修改或删除。**
 
 ### 统一硬件上报（伙伴侧）
 

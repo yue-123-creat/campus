@@ -65,9 +65,9 @@ def _guess_zone_by_x(x: float) -> str:
         x2 = float((os.environ.get("BLE_X_THRESHOLD_2") or "12.0").strip())
     except Exception:
         x2 = 12.0
-    left = (os.environ.get("BLE_ZONE_LEFT_LABEL") or "教室1").strip() or "教室1"
-    mid = (os.environ.get("BLE_ZONE_MID_LABEL") or "走廊").strip() or "走廊"
-    right = (os.environ.get("BLE_ZONE_RIGHT_LABEL") or "教室2").strip() or "教室2"
+    left = (os.environ.get("BLE_ZONE_LEFT_LABEL") or "区域A").strip() or "区域A"
+    mid = (os.environ.get("BLE_ZONE_MID_LABEL") or "区域B").strip() or "区域B"
+    right = (os.environ.get("BLE_ZONE_RIGHT_LABEL") or "区域C").strip() or "区域C"
     if x < x1:
         return left
     if x < x2:

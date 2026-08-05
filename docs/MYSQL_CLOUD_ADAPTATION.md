@@ -6,7 +6,7 @@
 DATABASE_BACKEND=mysql
 DB_USER=campus_app
 DB_PASSWORD=your_strong_password
-DB_HOST=mysql.internal.example
+DB_HOST=10.0.0.12
 DB_PORT=3306
 DB_NAME=campus_safety
 DB_CHARSET=utf8mb4
@@ -50,7 +50,7 @@ flask db upgrade
 
 ```bash
 set SQLITE_PATH=data/campus_safety.db
-set MYSQL_URI=mysql+pymysql://campus_app:YOUR_PASSWORD@mysql.internal.example:3306/campus_safety?charset=utf8mb4
+set MYSQL_URI=mysql+pymysql://campus_app:pwd@10.0.0.12:3306/campus_safety?charset=utf8mb4
 set MIGRATE_TABLES=users,devices,sensor_reports,events,sensor_env_samples,hardware_reports,sensor_data
 python tools/sqlite_to_mysql_migrate.py
 ```
@@ -63,8 +63,8 @@ python tools/sqlite_to_mysql_migrate.py
 ## 5. 备份与归档
 
 ```bash
-set MYSQL_URI=mysql+pymysql://campus_app:YOUR_PASSWORD@mysql.internal.example:3306/campus_safety?charset=utf8mb4
-set MYSQLDUMP_CMD=mysqldump -hmysql.internal.example -P3306 -ucampus_app -pYOUR_PASSWORD campus_safety
+set MYSQL_URI=mysql+pymysql://campus_app:pwd@10.0.0.12:3306/campus_safety?charset=utf8mb4
+set MYSQLDUMP_CMD=mysqldump -h10.0.0.12 -P3306 -ucampus_app -pYourPwd campus_safety
 set ARCHIVE_BEFORE_MONTHS=3
 set ARCHIVE_TABLES=hardware_reports,sensor_data,sensor_reports,events
 python tools/backup_and_archive.py

@@ -10,7 +10,8 @@ secrets/
 credentials/
 
 # —— 数据库与业务数据 ——
-data/
+data/*
+!data/.gitkeep
 *.db
 *.db-shm
 *.db-wal
@@ -22,7 +23,8 @@ dump/
 *.sql.gz
 
 # —— 用户上传与媒体 ——
-static/uploads/
+static/uploads/**
+!static/uploads/.gitkeep
 uploads/
 media/
 
@@ -62,6 +64,3 @@ temp/
 # —— 本地硬件/串口调试产物 ——
 *.pcap
 serial_capture/
-
-# —— 迁移本地状态（保留 versions）——
-# migrations/versions/__pycache__/

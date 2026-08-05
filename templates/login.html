@@ -95,23 +95,23 @@
         </p>
 
         <div class="login-emo-demo" aria-label="模拟测试账号">
-          <p class="login-emo-demo-title">模拟账号（点击填入用户名，密码见 README）</p>
+          <p class="login-emo-demo-title">模拟账号（点击快速填入）</p>
           <div class="login-emo-demo-chips">
-            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="admin">
+            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="admin" data-pass="admin123">
               <span class="login-emo-demo-role">管理员</span>
-              <span class="login-emo-demo-pair">admin</span>
+              <span class="login-emo-demo-pair">admin / admin123</span>
             </button>
-            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="teacher01">
+            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="teacher01" data-pass="teacher123">
               <span class="login-emo-demo-role">教师</span>
-              <span class="login-emo-demo-pair">teacher01</span>
+              <span class="login-emo-demo-pair">teacher01 / teacher123</span>
             </button>
-            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="student01">
+            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="student01" data-pass="student123">
               <span class="login-emo-demo-role">学生</span>
-              <span class="login-emo-demo-pair">student01</span>
+              <span class="login-emo-demo-pair">student01 / student123</span>
             </button>
-            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="security01">
+            <button type="button" class="login-emo-demo-chip" data-demo-user data-user="security01" data-pass="security123">
               <span class="login-emo-demo-role">安保</span>
-              <span class="login-emo-demo-pair">security01</span>
+              <span class="login-emo-demo-pair">security01 / security123</span>
             </button>
           </div>
         </div>
@@ -173,7 +173,7 @@
     demo.addEventListener("click", function () {
       if (!email || !pwd) return;
       email.value = demo.getAttribute("data-user") || "";
-      pwd.value = "";
+      pwd.value = demo.getAttribute("data-pass") || "";
       pwd.type = "password";
       updateEmailVisual();
       if (formInner) formInner.classList.remove("is-error");
