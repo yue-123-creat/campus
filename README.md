@@ -2,6 +2,20 @@
 
 基于 `Flask + SQLite + Bootstrap + ECharts` 构建，支持 `STM32 + WiFi` 通过 HTTP 上传传感器数据，并集成大模型 AI 分析能力。
 
+## 公开仓库说明
+
+| 文档 | 说明 |
+|------|------|
+| [**贡献边界与协作说明**](docs/ATTRIBUTION.md) | 作者独立完成模块 vs AI/Cursor 辅助范围 |
+| [**公开发布与脱敏**](docs/PUBLIC_RELEASE.md) | 密钥/数据处理方式、演示账号 |
+| **Git 提交历史** | [github.com/yue-123-creat/campus/commits/main](https://github.com/yue-123-creat/campus/commits/main)（保留真实历史，未重写） |
+
+### 演示视频
+
+功能演示入口（登录、驾驶舱、统计分析、硬件模块等）：
+
+> **待补充** — 请将公开链接（B 站 / 网盘等）填写至 [`docs/ATTRIBUTION.md`](docs/ATTRIBUTION.md) 与本节。
+
 ## 已实现能力（对应 12 项核心功能）
 
 1. 告警原因解释（AI 自动生成）
