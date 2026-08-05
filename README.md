@@ -8,7 +8,7 @@
 |------|------|
 | [**贡献边界与协作说明**](docs/ATTRIBUTION.md) | 作者独立完成模块 vs AI/Cursor 辅助范围 |
 | [**公开发布与脱敏**](docs/PUBLIC_RELEASE.md) | 密钥/数据处理方式、演示账号 |
-| **Git 提交历史** | [github.com/yue-123-creat/campus/commits/main](https://github.com/yue-123-creat/campus/commits/main)（保留真实历史，未重写） |
+| **Git 提交历史** | [github.com/yue-123-creat/campus/commits/main](https://github.com/yue-123-creat/campus/commits/main) |
 
 ### 演示视频
 

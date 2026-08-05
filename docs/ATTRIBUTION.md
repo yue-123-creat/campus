@@ -1,6 +1,6 @@
 # 项目贡献说明与协作边界
 
-本仓库为**脱敏后的公开版本**，保留完整 Git 提交历史（见 [Commits](https://github.com/yue-123-creat/campus/commits/main)），便于审阅开发过程。
+本仓库为**脱敏后的公开版本**。
 
 **作者：岳黎** · 仓库：<https://github.com/yue-123-creat/campus>
 
