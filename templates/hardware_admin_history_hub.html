@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}历史数据 · 管理员主页{% endblock %}
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">历史数据</h1>
+    <p class="text-muted small mb-0">请选择功能分类进入对应模块的历史回溯页；历史页不展示高/中/低风险光晕特效。</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='temp_hum') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">温湿度</h2>
+          <p class="small text-muted mb-0">查看区间曲线与阈值变化</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='smoke') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">烟雾检测</h2>
+          <p class="small text-muted mb-0">查看浓度曲线与告警区间</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='infrared') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">红外检测</h2>
+          <p class="small text-muted mb-0">查看区间有人/无人状态</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='crowd') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">人员密度</h2>
+          <p class="small text-muted mb-0">查看热力与趋势回溯</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='camera') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">摄像头</h2>
+          <p class="small text-muted mb-0">查看区间状态与异常记录</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='voice') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">语音识别</h2>
+          <p class="small text-muted mb-0">查看语音历史与异常声</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='wearable') }}">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">可穿戴移动终端</h2>
+          <p class="small text-muted mb-0">查看心率/定位等区间历史</p>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}
+

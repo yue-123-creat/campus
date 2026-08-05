@@ -1,0 +1,473 @@
+{# 人员密度监测 / 历史回溯 共用面板：由父模板设置 hw_mode、hw_heading、hw_sub #}
+{% set r = current_role | default('') %}
+<div
+  class="hw-page {% if r == 'teacher' %}hw-teacher-theme teacher-home-theme{% elif r == 'security' %}hw-security-theme security-home-theme{% endif %}"
+  id="hwPage"
+  data-api-report="{{ url_for('api_hardware_report') }}"
+  data-default-mode="{{ hw_mode | default('live') }}"
+  data-ble-zones="{{ ble_zones_json | default('') | e }}"
+  data-ble-zone-mode="{{ ble_zone_mode | default('by_x') | e }}"
+  data-ble-x1="{{ ble_x1 | default('9.0') | e }}"
+  data-ble-x2="{{ ble_x2 | default('12.0') | e }}"
+  data-ble-zone-left="{{ ble_zone_left | default('CLASSROOM_1') | e }}"
+  data-ble-zone-mid="{{ ble_zone_mid | default('HALLWAY') | e }}"
+  data-ble-zone-right="{{ ble_zone_right | default('CLASSROOM_2') | e }}"
+  data-heart-poll-live-sec="1"
+>
+  <header class="hw-hero">
+    <div class="hw-hero-text">
+      <h2 class="hw-title mb-1">{{ hw_heading | default('硬件数据可视化') }}</h2>
+      <p class="hw-sub text-muted mb-0">{{ hw_sub | default('温湿度 · 烟雾 · 红外 · 心率 · 实时监测与历史回溯') }}</p>
+    </div>
+    <div class="hw-toolbar flex-wrap gap-2 align-items-center">
+      <span class="hw-badge" id="hwUpdatedAt" aria-live="polite">—</span>
+      <label class="hw-label mb-0">
+        <span class="me-1">自动刷新</span>
+        <select id="hwPollSec" class="form-select form-select-sm hw-select" aria-label="自动刷新间隔">
+          <option value="0">关闭</option>
+          <option value="3">3 秒</option>
+          <option value="5" selected>5 秒</option>
+          <option value="10">10 秒</option>
+          <option value="30">30 秒</option>
+        </select>
+      </label>
+      <button type="button" class="btn btn-sm hw-btn-primary" id="hwBtnRefresh" title="立即拉取最新数据">手动刷新</button>
+      <div class="hw-divider d-none d-md-block"></div>
+      <label class="hw-label mb-0">
+        <span class="me-1">开始</span>
+        <input type="datetime-local" id="hwRangeStart" class="form-control form-control-sm hw-input" />
+      </label>
+      <label class="hw-label mb-0">
+        <span class="me-1">结束</span>
+        <input type="datetime-local" id="hwRangeEnd" class="form-control form-control-sm hw-input" />
+      </label>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="hwBtnHistory">查询历史</button>
+      <button type="button" class="btn btn-sm btn-outline-info" id="hwBtnLive" title="恢复近24小时实时模式">恢复实时</button>
+    </div>
+  </header>
+
+  <div class="hw-empty alert alert-info d-none" id="hwEmpty" role="status">
+    暂无数据。可使用 <code>POST /api/hardware/report</code> 统一上报（含传感器与硬件侧 AI 结果），或使用 <code>POST /api/telemetry</code> 上报基础 <code>extra</code> 字段。
+  </div>
+
+  <section class="hw-section" aria-label="指标卡片">
+    <h3 class="hw-section-title">{% if hw_mode == 'history' %}区间数据{% else %}实时数据{% endif %}</h3>
+    {% if r == 'security' %}
+    <div class="row g-3 hw-cards-row">
+      <div class="col-12"><p class="small text-muted mb-0 hw-partner-hint">仅展示人员密度监测能力（HLK-LD2450），聚焦人群疏散与现场处置。</p></div>
+
+      <div class="col-12 col-lg-5">
+        <article class="hw-card hw-card--tall hw-card--ld2450" id="cardCrowdLd2450">
+          <div class="hw-card-head">
+            <span class="hw-card-icon" aria-hidden="true">📡</span>
+            <div class="flex-grow-1 min-w-0">
+              <h4 class="hw-card-title">人员密度（HLK-LD2450）</h4>
+              <p class="hw-card-meta mb-0">海凌科 HLK-LD2450 毫米波雷达：原始上报与豆包 AI 安全分析（按 device_id 拉取最新一条）</p>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label for="hwLd2450DeviceId" class="form-label small text-muted mb-1">device_id</label>
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch">
+              <input
+                id="hwLd2450DeviceId"
+                type="text"
+                class="form-control form-control-sm hw-input flex-grow-1"
+                placeholder="与 POST /api/ld2450/upload 中一致"
+                autocomplete="off"
+              />
+              <button type="button" class="btn btn-sm hw-btn-primary text-nowrap" id="hwLd2450SaveBtn">保存并拉取</button>
+            </div>
+          </div>
+          <div id="hwLd2450HintEmpty" class="text-muted small mb-2">请填写 device_id 后点击「保存并拉取」。</div>
+          <div id="hwLd2450EmptyData" class="alert alert-light border small py-2 mb-2 d-none" role="status">
+            暂无 HLK-LD2450 人员密度监测数据
+          </div>
+          <div id="hwLd2450Body" class="d-none">
+            <div class="hw-ld2450-split">
+              <div class="hw-ld2450-pane">
+                <p class="small fw-semibold mb-2 hw-ld2450-pane-title">原始监测数据</p>
+                <ul class="list-unstyled small mb-0 hw-ld2450-kv">
+                  <li class="d-flex justify-content-between gap-2"><span class="text-muted">区域人数</span><strong id="hwLd2450People">—</strong></li>
+                  <li class="d-flex justify-content-between gap-2"><span class="text-muted">存在状态</span><strong id="hwLd2450Presence">—</strong></li>
+                  <li class="d-flex justify-content-between gap-2"><span class="text-muted">距离</span><strong id="hwLd2450Distance">—</strong></li>
+                  <li class="d-flex justify-content-between gap-2"><span class="text-muted">密度 / 拥挤度</span><strong id="hwLd2450Density">—</strong></li>
+                  <li class="d-flex flex-column align-items-stretch gap-1 pt-1">
+                    <span class="text-muted">轨迹 / 运动</span>
+                    <span class="text-break" id="hwLd2450Trajectory">—</span>
+                    <div id="hwLd2450TrajVizWrap" class="hw-ld2450-traj-viz-wrap d-none w-100 mt-2" aria-label="轨迹相对位置示意">
+                      <div class="small text-muted mb-1 hw-ld2450-traj-viz-label">轨迹分布（卡片内相对位置，非真实比例尺）</div>
+                      <div class="hw-ld2450-traj-viz rounded-3 border position-relative overflow-hidden">
+                        <div class="hw-ld2450-traj-viz-inner position-relative w-100 h-100" id="hwLd2450TrajVizInner"></div>
+                      </div>
+                    </div>
+                  </li>
+                  <li class="d-flex justify-content-between gap-2 border-top mt-2 pt-2">
+                    <span class="text-muted">入库时间</span>
+                    <strong class="text-end small" id="hwLd2450CreateTime">—</strong>
+                  </li>
+                </ul>
+              </div>
+              <div class="hw-ld2450-pane">
+                <p class="small fw-semibold mb-2 hw-ld2450-pane-title">豆包 AI 安全分析</p>
+                <div id="hwLd2450AiEmpty" class="text-muted small mb-0">暂未生成豆包AI安全分析</div>
+                <div id="hwLd2450AiBody" class="d-none">
+                  <p class="small fw-medium mb-2 text-break" id="hwLd2450AiSummary">—</p>
+                  <div class="d-grid gap-2 hw-ld2450-ai-grid">
+                    <div class="p-2 rounded-3 border bg-white">
+                      <div class="text-muted" style="font-size: 0.7rem">拥挤度判断</div>
+                      <div class="small fw-semibold text-break" id="hwLd2450AiCrowd">—</div>
+                    </div>
+                    <div class="p-2 rounded-3 border bg-white">
+                      <div class="text-muted" style="font-size: 0.7rem">风险提示</div>
+                      <div class="small fw-semibold text-break" id="hwLd2450AiRisk">—</div>
+                    </div>
+                    <div class="p-2 rounded-3 border bg-white">
+                      <div class="text-muted" style="font-size: 0.7rem">置信度</div>
+                      <div class="small fw-semibold" id="hwLd2450AiConfidence">—</div>
+                    </div>
+                  </div>
+                  <p class="small text-muted mb-0 mt-2"><span class="fw-semibold text-body">安全建议：</span><span id="hwLd2450AiAdvice" class="text-break">—</span></p>
+                </div>
+              </div>
+            </div>
+            <details class="mt-2 small user-select-none d-none d-md-block">
+              <summary class="text-muted">原始 JSON（节选）</summary>
+              <pre class="hw-ld2450-pre mb-0 mt-1" id="hwLd2450RawJson">—</pre>
+            </details>
+          </div>
+        </article>
+      </div>
+      <div class="col-12 col-lg-7">
+        <article class="hw-card hw-card--wide">
+          <div class="hw-card-head">
+            <span class="hw-card-icon" aria-hidden="true">📊</span>
+            <div>
+              <h4 class="hw-card-title">人员密度热力与趋势回溯</h4>
+              <p class="hw-card-meta mb-0">保留原有时间范围查询、自动/手动刷新与实时恢复逻辑</p>
+            </div>
+          </div>
+          <div class="hw-chart hw-chart--heat" id="chartCrowdHeat" role="img" aria-label="人员密度热力图"></div>
+        </article>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="hw-section row g-3" aria-label="设备状态">
+    <div class="col-12">
+      <h3 class="hw-section-title">设备状态（HLK-LD2450）</h3>
+      <article class="hw-card hw-card--wide">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border bg-white h-100">
+              <p class="small fw-semibold mb-2">在线状态</p>
+              <p class="mb-0 text-muted small">仅展示人员密度雷达设备在线与最近上报时间。</p>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border bg-white h-100">
+              <p class="small fw-semibold mb-2">连接情况</p>
+              <p class="mb-0 text-muted small">基于 device_id 拉取最新记录，判定连接可用性。</p>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="p-3 rounded-4 border bg-white h-100">
+              <p class="small fw-semibold mb-2">数据接收状态</p>
+              <p class="mb-0 text-muted small">仅保留 LD2450 人员密度数据接收链路展示。</p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+    {% else %}
+    <div class="row g-3 hw-cards-row">
+      {% if r == 'teacher' %}
+      <div class="col-12"><p class="small text-muted mb-0 hw-partner-hint">教师端仅展示：温湿度、烟雾、红外、学生心率/血氧（隐私最小化，不展示定位/人员密度/摄像头/语音）。</p></div>
+      {% else %}
+      <div class="col-12"><p class="small text-muted mb-0 hw-partner-hint">以下为硬件监测全量可视化，支持环境、心率、语音、定位与人员密度多模块联动。</p></div>
+      {% endif %}
+      <div class="col-12 col-lg-6">
+        <article class="hw-card hw-card--wide monitor-card" id="cardTempHum">
+          <div class="hw-card-head"><span class="hw-card-icon">🌡️</span><div><h4 class="hw-card-title">温湿度</h4><p class="hw-card-meta mb-0" id="metaTempHum">—</p></div></div>
+          <div class="hw-kpi-row">
+            <div class="hw-kpi" id="kpiTemp"><span class="hw-kpi-label">温度</span><span class="hw-kpi-value" id="valTemp">—</span><span class="hw-kpi-unit">℃</span></div>
+            <div class="hw-kpi" id="kpiHum"><span class="hw-kpi-label">湿度</span><span class="hw-kpi-value" id="valHum">—</span><span class="hw-kpi-unit">%</span></div>
+          </div>
+          <div class="hw-chart" id="chartTempHum"></div>
+        </article>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <article class="hw-card hw-card--alarm monitor-card" id="cardSmoke">
+          <div class="hw-card-head"><span class="hw-card-icon">💨</span><div><h4 class="hw-card-title">烟雾</h4><p class="hw-card-meta mb-0" id="metaSmoke">浓度 · 状态</p></div></div>
+          <div class="hw-kpi hw-kpi--center"><span class="hw-kpi-label">浓度(ppm)</span><span class="hw-kpi-value hw-kpi-value--lg" id="valSmoke">—</span></div>
+          <p class="hw-status hw-status--ok mb-2" id="statusSmoke">正常</p>
+          <div class="hw-chart hw-chart--sm" id="chartSmoke"></div>
+        </article>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <article class="hw-card monitor-card" id="cardIr">
+          <div class="hw-card-head"><span class="hw-card-icon" id="iconIr">🚶</span><div><h4 class="hw-card-title">红外检测</h4><p class="hw-card-meta mb-0">区域人员（0=无人，1=有人）</p></div></div>
+          <div class="hw-ir-body text-center py-3"><div class="hw-ir-icon-wrap" id="irIconWrap"><span class="hw-ir-state" id="textIr">—</span></div><p class="small text-muted mb-0 mt-2" id="metaIr">等待数据</p></div>
+        </article>
+      </div>
+      <div class="col-12">
+        <article class="hw-card hw-card--wide monitor-card" id="cardHeart">
+          <div class="hw-card-head">
+            <span class="hw-card-icon">❤️</span>
+            <div>
+              <h4 class="hw-card-title">学生心率</h4>
+              <p class="hw-card-meta mb-0" id="metaHeart">静息参考：60–100 次/分</p>
+            </div>
+            <div class="ms-auto d-flex gap-2 flex-wrap">
+              <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="today">今日</button>
+              <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="7d">近7天</button>
+              <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="30d">近30天</button>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-3 text-center">
+              <div class="hw-kpi hw-kpi--center"><span class="hw-kpi-label">当前心率</span><span class="hw-kpi-value hw-kpi-value--lg" id="valHeart">—</span><span class="hw-kpi-unit">bpm</span></div>
+              <div class="hw-kpi hw-kpi--center mt-2"><span class="hw-kpi-label">血氧(SpO₂)</span><span class="hw-kpi-value" id="valSpo2">—</span><span class="hw-kpi-unit">%</span></div>
+              <p class="small mb-1 mt-2" id="hintHeart">数值仅供辅助监测。</p><div class="small text-muted" id="heartStats">今日均值：— · 最高：— · 最低：— · 异常：— 次</div>
+            </div>
+            <div class="col-md-9"><div class="hw-chart hw-chart--heart" id="chartHeart"></div><div class="hw-chart hw-chart--heart mt-2" id="chartSpo2"></div></div>
+          </div>
+          <div class="d-none" id="aiHealthBox"><span id="aiHealthRisk"></span><span id="aiHealthHint"></span><span id="aiHealthMsg"></span></div>
+        </article>
+      </div>
+      {% if r == 'admin' %}
+      <div class="col-12 col-lg-4">
+        <article class="hw-card hw-card--tall hw-card--ld2450 monitor-card" id="cardCrowdLd2450">
+          <div class="hw-card-head"><span class="hw-card-icon">📡</span><div><h4 class="hw-card-title">人员密度（HLK-LD2450）</h4><p class="hw-card-meta mb-0">按 device_id 拉取最新一条</p></div></div>
+          <div class="mb-2"><label class="form-label small text-muted mb-1" for="hwLd2450DeviceId">device_id</label><div class="d-flex gap-2"><input id="hwLd2450DeviceId" class="form-control form-control-sm hw-input" /><button type="button" class="btn btn-sm hw-btn-primary" id="hwLd2450SaveBtn">保存并拉取</button></div></div>
+          <div id="hwLd2450HintEmpty" class="text-muted small mb-2">请填写 device_id 后点击「保存并拉取」。</div>
+          <div id="hwLd2450EmptyData" class="alert alert-light border small py-2 mb-2 d-none">暂无 HLK-LD2450 人员密度监测数据</div>
+          <div id="hwLd2450Body" class="d-none">
+            <ul class="list-unstyled small mb-2 hw-ld2450-kv">
+              <li class="d-flex justify-content-between"><span class="text-muted">区域人数</span><strong id="hwLd2450People">—</strong></li>
+              <li class="d-flex justify-content-between"><span class="text-muted">存在状态</span><strong id="hwLd2450Presence">—</strong></li>
+              <li class="d-flex justify-content-between"><span class="text-muted">距离</span><strong id="hwLd2450Distance">—</strong></li>
+              <li class="d-flex justify-content-between"><span class="text-muted">密度/拥挤度</span><strong id="hwLd2450Density">—</strong></li>
+              <li class="d-flex justify-content-between"><span class="text-muted">轨迹/运动</span><strong id="hwLd2450Trajectory">—</strong></li>
+              <li class="d-flex justify-content-between"><span class="text-muted">入库时间</span><strong id="hwLd2450CreateTime">—</strong></li>
+            </ul>
+            <div id="hwLd2450AiEmpty" class="text-muted small">暂未生成豆包AI安全分析</div>
+            <div id="hwLd2450AiBody" class="d-none small">
+              <p class="fw-medium mb-1" id="hwLd2450AiSummary">—</p>
+              <p class="mb-1">拥挤度：<span id="hwLd2450AiCrowd">—</span></p>
+              <p class="mb-1">风险提示：<span id="hwLd2450AiRisk">—</span></p>
+              <p class="mb-1">置信度：<span id="hwLd2450AiConfidence">—</span></p>
+              <p class="mb-0">建议：<span id="hwLd2450AiAdvice">—</span></p>
+            </div>
+            <details class="mt-2 small"><summary class="text-muted">原始 JSON（节选）</summary><pre class="hw-ld2450-pre mb-0 mt-1" id="hwLd2450RawJson">—</pre></details>
+            <div id="hwLd2450TrajVizWrap" class="d-none"><div id="hwLd2450TrajVizInner"></div></div>
+          </div>
+        </article>
+      </div>
+      <div class="col-12 col-lg-8">
+        <article class="hw-card hw-card--wide monitor-card" id="cardCrowdHeat"><div class="hw-card-head"><span class="hw-card-icon">📊</span><div><h4 class="hw-card-title">人员数量热力（时间 × 强度）</h4><p class="hw-card-meta mb-0">来自统一上报中的 crowd 序列</p></div></div><div class="hw-chart hw-chart--heat" id="chartCrowdHeat"></div></article>
+      </div>
+      {% if r == 'admin' %}
+      <div class="col-12">
+        <article class="hw-card hw-card--wide" id="cardCamAi">
+          <div class="hw-card-head">
+            <span class="hw-card-icon">📷</span>
+            <div class="flex-grow-1 min-w-0">
+              <h4 class="hw-card-title">摄像头 AI</h4>
+              <p class="hw-card-meta mb-0" id="metaCamAi">按 device_id 查询 · 状态 · 画面预览</p>
+            </div>
+          </div>
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-4">
+              <input id="hwCamDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id（与摄像头上报一致）">
+            </div>
+            <div class="col-md-8 d-flex gap-2 flex-wrap">
+              <button type="button" id="hwCamSaveBtn" class="btn btn-sm hw-btn-primary">保存并查询</button>
+              <button type="button" id="hwCamQueryBtn" class="btn btn-sm btn-outline-primary">查询</button>
+              <button type="button" id="hwCamAutoBtn" class="btn btn-sm btn-outline-primary">自动刷新：关</button>
+            </div>
+          </div>
+          <div id="hwCamMsg" class="alert alert-info py-2 d-none mt-2 mb-2"></div>
+          <div class="hw-cam-preview rounded-3 overflow-hidden bg-light border mb-2">
+            <img id="hwCamPreview" class="w-100 d-none" alt="">
+            <div id="hwCamPlaceholder" class="p-2 text-muted small">请输入 device_id 后查询</div>
+          </div>
+          <a id="hwCamViewBtn" class="btn btn-sm btn-outline-primary disabled" href="javascript:void(0)">查看原图</a>
+          <p class="hw-status hw-status--ok mt-2 mb-1" id="hwCamStatus">—</p>
+          <p class="small text-muted mb-0" id="hwCamDetail">—</p>
+        </article>
+      </div>
+      <div class="col-12"><article class="hw-card hw-card--wide" id="cardVoice"><div class="hw-card-head"><span class="hw-card-icon">🎙️</span><div><h4 class="hw-card-title">语音识别</h4></div></div><div class="row g-2"><div class="col-md-4"><input id="hwVoiceDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id"></div><div class="col-md-2"><input id="hwVoiceLimit" type="number" class="form-control form-control-sm hw-input" value="10"></div><div class="col-md-6 d-flex gap-2"><button type="button" id="hwVoiceSaveBtn" class="btn btn-sm hw-btn-primary">保存并查询</button><button type="button" id="hwVoiceQueryBtn" class="btn btn-sm btn-outline-primary">查询</button><button type="button" id="hwVoiceClearNormalBtn" class="btn btn-sm btn-outline-danger">清除普通</button><button type="button" id="hwVoiceClearAbnormalBtn" class="btn btn-sm btn-outline-danger">清除异常</button></div></div><div class="row g-2 mt-2"><div class="col-md-6"><div class="small text-muted">普通语音</div><div id="hwVoiceText" class="small">—</div><ul id="hwVoiceNormalList" class="small mb-0"></ul></div><div class="col-md-6"><div class="small text-muted">异常语音</div><div id="hwVoiceAlarm" class="small">正常</div><div id="hwVoiceAbnormalText" class="small">—</div><ul id="hwVoiceAbnormalList" class="small mb-0"></ul></div></div></article></div>
+      <div class="col-12"><article class="hw-card hw-card--wide" id="cardBleLocation"><div class="hw-card-head"><span class="hw-card-icon">📍</span><div><h4 class="hw-card-title">蓝牙定位（室内）</h4></div></div><div class="row g-2 align-items-end"><div class="col-md-4"><input id="hwBleDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id"></div><div class="col-md-2"><input id="hwBleLimit" type="number" value="100" class="form-control form-control-sm hw-input"></div><div class="col-md-6 d-flex gap-2"><button type="button" id="hwBleQueryBtn" class="btn btn-sm hw-btn-primary">查询定位</button><button type="button" id="hwBleAutoBtn" class="btn btn-sm btn-outline-primary">自动刷新：关</button></div></div><div id="hwBleMsg" class="alert alert-info py-2 d-none mt-2 mb-2"></div><div class="small">最新：<span id="hwBleLatestDevice">—</span> / X <span id="hwBleLatestX">—</span> / Y <span id="hwBleLatestY">—</span> / 区域 <span id="hwBleLatestZoneText">—</span> / 时间 <span id="hwBleLatestTs">—</span> / 入库 <span id="hwBleLatestCt">—</span></div><div class="table-responsive rounded-3 border bg-white mt-2"><table class="table table-sm mb-0"><tbody id="hwBleHistoryBody"><tr><td class="text-muted">请输入 device_id 后查询</td></tr></tbody></table></div></article></div>
+      <div class="col-12"><article class="hw-card hw-card--wide" id="cardGpsLocation"><div class="hw-card-head"><span class="hw-card-icon">🛰️</span><div><h4 class="hw-card-title">GPS 定位（室外）</h4></div></div><div class="row g-2 align-items-end"><div class="col-md-4"><input id="hwGpsDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id"></div><div class="col-md-2"><input id="hwGpsLimit" type="number" value="100" class="form-control form-control-sm hw-input"></div><div class="col-md-6 d-flex gap-2"><button type="button" id="hwGpsQueryBtn" class="btn btn-sm hw-btn-primary">查询 GPS</button><button type="button" id="hwGpsAutoBtn" class="btn btn-sm btn-outline-primary">自动刷新：关</button></div></div><div id="hwGpsMsg" class="alert alert-info py-2 d-none mt-2 mb-2"></div><div class="small">最新：<span id="hwGpsLatestDevice">—</span> / 纬度 <span id="hwGpsLatestLat">—</span> / 经度 <span id="hwGpsLatestLng">—</span> / 海拔 <span id="hwGpsLatestAlt">—</span> / 速度 <span id="hwGpsLatestSpeed">—</span> / 地址 <span id="hwGpsLatestAddress">—</span> / 时间 <span id="hwGpsLatestTs">—</span> / 入库 <span id="hwGpsLatestCt">—</span></div><div class="table-responsive rounded-3 border bg-white mt-2"><table class="table table-sm mb-0"><tbody id="hwGpsHistoryBody"><tr><td class="text-muted">请输入 device_id 后查询</td></tr></tbody></table></div><div id="hwGpsMap" class="rounded-3 border mt-2" style="height:320px" data-tdt-key="fbc5632a1019b64bbcf703b9b76bdf61" data-tdt-geocode-key="cddb1485469b877699277450e111d794" data-default-lng="103.9" data-default-lat="30.8" data-default-zoom="15"></div><div class="small text-muted mt-2" id="hwGpsMapAttribution">地图来源：国家地理信息公共服务平台 天地图</div></article></div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% if r == 'admin' %}
+  <section class="hw-section" aria-label="快捷入口">
+    <h3 class="hw-section-title">快捷入口</h3>
+    <div class="row g-3">
+      {% if hw_mode == 'history' %}
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='temp_hum') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">温湿度</h4><p class="small text-muted mb-0">进入区间数据与趋势曲线</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='smoke') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">烟雾检测</h4><p class="small text-muted mb-0">进入区间浓度与告警回溯</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='infrared') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">红外检测</h4><p class="small text-muted mb-0">进入区间有人/无人状态回溯</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='crowd') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">人员密度</h4><p class="small text-muted mb-0">进入热力与趋势回溯</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='camera') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">摄像头</h4><p class="small text-muted mb-0">进入区间状态与异常回溯</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='voice') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">语音识别</h4><p class="small text-muted mb-0">进入语音与异常声回溯</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('history_admin_module_page', module_key='wearable') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">可穿戴移动终端</h4><p class="small text-muted mb-0">进入心率/定位区间回溯</p></article></a></div>
+      {% else %}
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='temp_hum') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">温湿度</h4><p class="small text-muted mb-0">进入实时数据与趋势曲线</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='smoke') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">烟雾检测</h4><p class="small text-muted mb-0">进入浓度、预警与报警详情</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='infrared') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">红外检测</h4><p class="small text-muted mb-0">进入有人/无人状态详情</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='crowd') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">人员密度</h4><p class="small text-muted mb-0">进入雷达与热力趋势详情</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='camera') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">摄像头</h4><p class="small text-muted mb-0">进入监测画面与状态详情</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='voice') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">语音识别</h4><p class="small text-muted mb-0">进入语音与异常声详情</p></article></a></div>
+      <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='wearable') }}"><article class="hw-card h-100"><h4 class="hw-card-title mb-1">可穿戴移动终端</h4><p class="small text-muted mb-0">按学生列表查看心率、蓝牙定位、GPS定位</p></article></a></div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+    {% endif %}
+</div>
+
+<div class="modal fade" id="hwAlarmModal" tabindex="-1" aria-labelledby="hwAlarmTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content hw-modal">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="hwAlarmTitle">安全告警</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body" id="hwAlarmBody"></div>
+    </div>
+  </div>
+</div>
+
+{% if hw_mode != 'history' %}
+<script>
+  (function () {
+    const mapBox = document.getElementById("hwGpsMap");
+    if (!mapBox) return;
+    const sdkBase = "https://api.tianditu.gov.cn/api?v=4.0&tk=";
+    const geocodeApi = "/api/gps/reverse-geocode";
+    const tk = (mapBox.dataset.tdtKey || "").trim();
+    const geocodeTk = (mapBox.dataset.tdtGeocodeKey || "").trim();
+    if (!tk) return;
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function toPoint(item) {
+      if (!item) return null;
+      const lat = Number(item.latitude);
+      const lng = Number(item.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+      return { lat, lng };
+    }
+    let map = null;
+    let marker = null;
+    let polyline = null;
+    let label = null;
+    let geocodeSeq = 0;
+
+    function setAddressText(v) {
+      const node = document.getElementById("hwGpsLatestAddress");
+      if (!node) return;
+      node.textContent = v || "地址解析中/暂无详细地址";
+    }
+    function reverseGeocode(lat, lng) {
+      if (!geocodeTk) return Promise.resolve("地址解析中/暂无详细地址");
+      const reqId = ++geocodeSeq;
+      return fetch(
+        geocodeApi + "?latitude=" + encodeURIComponent(String(lat)) + "&longitude=" + encodeURIComponent(String(lng)),
+        { method: "GET", credentials: "same-origin" }
+      )
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("geocoder api not ok"))))
+        .then((resp) => {
+          if (reqId !== geocodeSeq) return "";
+          const addr = (resp && resp.data && resp.data.address) || "";
+          return addr || "地址解析中/暂无详细地址";
+        })
+        .catch(() => "地址解析中/暂无详细地址");
+    }
+    function ensureSdk() {
+      if (window.T && window.T.Map) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const old = document.querySelector("script[data-gps-tdt='1']");
+        if (old) {
+          old.addEventListener("load", resolve, { once: true });
+          old.addEventListener("error", () => reject(new Error("天地图脚本加载失败")), { once: true });
+          return;
+        }
+        const s = document.createElement("script");
+        s.src = sdkBase + encodeURIComponent(tk);
+        s.async = true;
+        s.defer = true;
+        s.dataset.gpsTdt = "1";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("天地图脚本加载失败"));
+        document.head.appendChild(s);
+      });
+    }
+    function initMap() {
+      if (map || !(window.T && window.T.Map)) return;
+      const lng = Number(mapBox.dataset.defaultLng || "103.9");
+      const lat = Number(mapBox.dataset.defaultLat || "30.8");
+      const zoom = Number(mapBox.dataset.defaultZoom || "15");
+      map = new T.Map("hwGpsMap");
+      map.centerAndZoom(new T.LngLat(Number.isNaN(lng) ? 103.9 : lng, Number.isNaN(lat) ? 30.8 : lat), Number.isNaN(zoom) ? 15 : zoom);
+      if (map.enableScrollWheelZoom) map.enableScrollWheelZoom();
+    }
+    async function draw(latestItem, historyItems) {
+      if (!map) return;
+      const latest = toPoint(latestItem);
+      const track = (Array.isArray(historyItems) ? historyItems : []).map(toPoint).filter(Boolean);
+      if (marker) { try { map.removeOverLay(marker); } catch (e) {} marker = null; }
+      if (polyline) { try { map.removeOverLay(polyline); } catch (e) {} polyline = null; }
+      if (label) { try { map.removeOverLay(label); } catch (e) {} label = null; }
+      if (track.length >= 2) {
+        polyline = new T.Polyline(track.map((p) => new T.LngLat(p.lng, p.lat)), { color: "#00d4d8", weight: 5, opacity: 0.88 });
+        map.addOverLay(polyline);
+      }
+      if (latest) {
+        setAddressText("地址解析中...");
+        const ll = new T.LngLat(latest.lng, latest.lat);
+        marker = new T.Marker(ll); map.addOverLay(marker);
+        label = new T.Label({ text: "GPS 最新点位", position: ll, offset: new T.Point(12, -18) });
+        map.addOverLay(label);
+        const infoHtml =
+          "<div style='line-height:1.6;min-width:190px;'>" +
+          "<div><strong>device_id：</strong>" + esc(latestItem && latestItem.device_id) + "</div>" +
+          "<div><strong>纬度：</strong>" + esc(latest.lat) + "</div>" +
+          "<div><strong>经度：</strong>" + esc(latest.lng) + "</div>" +
+          "<div><strong>定位时间：</strong>" + esc(latestItem && latestItem.timestamp) + "</div>" +
+          "<div><strong>速度：</strong>" + esc(latestItem && latestItem.speed) + "</div>" +
+          "</div>";
+        if (window.T && T.InfoWindow) map.openInfoWindow(new T.InfoWindow(infoHtml, { offset: new T.Point(0, -24) }), ll);
+        map.centerAndZoom(ll, 15);
+        const addr = await reverseGeocode(latest.lat, latest.lng);
+        if (addr) setAddressText(addr);
+      } else if (track.length) {
+        map.centerAndZoom(new T.LngLat(track[track.length - 1].lng, track[track.length - 1].lat), 15);
+        setAddressText("地址解析中/暂无详细地址");
+      } else {
+        setAddressText("地址解析中/暂无详细地址");
+      }
+    }
+    ensureSdk().then(function () {
+      initMap();
+      window.hwGpsMapBridge = {
+        updateFromGpsData: function (latestItem, historyItems) {
+          draw(latestItem, historyItems);
+        },
+      };
+    }).catch(function () {});
+  })();
+</script>
+{% endif %}

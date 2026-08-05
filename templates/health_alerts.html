@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}健康预警 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="px-1 px-md-0" id="healthAlertsPage" data-api="/api/health/alerts">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <h1 class="h4 fw-bold mb-1 text-stat-title">健康预警（连续 5 次异常）</h1>
+      <p class="small text-muted mb-0">仅当 AI 分析结果对同一用户连续异常 ≥5 次，才会在此醒目展示；其他数据请到后台日志查看。</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <a class="btn btn-sm btn-outline-primary rounded-pill px-3" href="{{ url_for('health_logs_page') }}">查看后台日志</a>
+      <button class="btn btn-sm btn-primary rounded-pill px-3" id="btnAlertRefresh">刷新</button>
+    </div>
+  </div>
+
+  <div id="alertsEmpty" class="card border-0 shadow-sm rounded-4 p-4 text-center text-muted">
+    当前暂无连续异常预警。
+  </div>
+
+  <div class="row g-3 d-none" id="alertsGrid"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/health-alerts.js') }}"></script>
+{% endblock %}
+

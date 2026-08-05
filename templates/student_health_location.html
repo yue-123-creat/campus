@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}我的健康与位置 · 学生端{% endblock %}
+
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">我的健康与位置</h1>
+    <p class="text-muted small mb-0">仅本人可见。定位仅展示大致片区/地点描述，不展示经纬度与地图。</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <h2 class="h6 fw-bold mb-0">个人健康（心率/血氧）</h2>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-sm btn-outline-primary stu-hl-range" data-range="today">今日</button>
+            <button type="button" class="btn btn-sm btn-outline-primary stu-hl-range" data-range="7d">近7天</button>
+            <button type="button" class="btn btn-sm btn-outline-primary stu-hl-range" data-range="30d">近30天</button>
+          </div>
+        </div>
+
+        <div class="row g-3 align-items-stretch mb-3">
+          <div class="col-12 col-md-4 text-center">
+            <div class="rounded-4 border bg-white p-3 h-100">
+              <div class="small text-muted">当前心率</div>
+              <div class="display-6 fw-bold" id="stuHlHr">—</div>
+              <div class="small text-muted">bpm</div>
+              <div class="mt-2 small" id="stuHlHrHint">—</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4 text-center">
+            <div class="rounded-4 border bg-white p-3 h-100">
+              <div class="small text-muted">当前血氧</div>
+              <div class="display-6 fw-bold" id="stuHlSpo2">—</div>
+              <div class="small text-muted">%</div>
+              <div class="mt-2 small text-muted" id="stuHlMeasuredAt">—</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="rounded-4 border bg-white p-3 h-100">
+              <div class="small fw-semibold mb-2">提示</div>
+              <div class="small text-muted mb-2">该模块仅用于自我健康了解，不作为医疗诊断依据。</div>
+              <div class="small text-muted">如出现持续异常，请及时联系老师/校医或拨打紧急求助。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-4 border bg-white p-2">
+          <div id="stuHlChartHr" style="height:240px;"></div>
+          <p class="small text-muted mt-2 mb-0 px-2 d-none" id="stuHlTrendHint"></p>
+        </div>
+        <div class="rounded-4 border bg-white p-2 mt-3">
+          <div id="stuHlChartSpo2" style="height:220px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card card-soft border-0 shadow-sm mb-3">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 fw-bold mb-0">蓝牙定位（室内 · 大致区域）</h2>
+          <span class="small text-muted" id="stuHlBleTs">—</span>
+        </div>
+        <div class="rounded-4 border bg-white p-3">
+          <div class="small text-muted mb-1">状态</div>
+          <div class="fw-semibold" id="stuHlBleStatus">—</div>
+          <div class="small text-muted mt-2 mb-1">当前区域</div>
+          <div class="fw-semibold" id="stuHlBleZone">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-soft border-0 shadow-sm">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 fw-bold mb-0">户外定位（GPS · 大致地点）</h2>
+          <span class="small text-muted" id="stuHlGpsTs">—</span>
+        </div>
+        <div class="rounded-4 border bg-white p-3">
+          <div class="small text-muted mb-1">状态</div>
+          <div class="fw-semibold" id="stuHlGpsStatus">—</div>
+          <div class="small text-muted mt-2 mb-1">大致地点</div>
+          <div class="fw-semibold" id="stuHlGpsPlace">—</div>
+          <div class="small text-muted mt-2">为保护隐私，此处不展示精确坐标与轨迹。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student-health-location.js') }}"></script>
+{% endblock %}
+

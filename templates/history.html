@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{% if current_role == 'security' %}人员密度监测 - 历史数据 · 校园安全智能监测平台{% else %}历史数据 · 校园安全智能监测平台{% endif %}{% endblock %}
+{% block head_extra %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+{% set hw_mode = 'history' %}
+{% if current_role == 'security' %}
+{% set hw_heading = '人员密度监测 - 历史数据' %}
+{% set hw_sub = '按时间区间查看人员密度热力分布与趋势变化（仅保留 HLK-LD2450 数据）' %}
+{% else %}
+{% set hw_heading = '历史数据' %}
+{% set hw_sub = '按时间区间查询硬件采样；图表与阈值策略与「硬件监测」页一致' %}
+{% endif %}
+{% include 'partials/hardware_dashboard.html' %}
+{% endblock %}
+
+{% block vendor_scripts %}{# ECharts 已在 base.html 中全局引入 #}{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hardware-dashboard.js') }}"></script>
+{% endblock %}

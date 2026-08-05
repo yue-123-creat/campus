@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}硬件监测 · 教师主页{% endblock %}
+
+{% block head_extra %}
+<style>
+  body[data-role="teacher"] .teacher-hw-hub-card{
+    border-radius: 14px;
+    background: #ffffff;
+  }
+  body[data-role="teacher"] .teacher-hw-hub-card:hover{
+    transform: translateY(-1px);
+    transition: transform .15s ease;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3 teacher-home-theme">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">硬件监测</h1>
+    <p class="text-muted small mb-0">教师端仅展示环境与健康监测入口（隐私最小化：不提供定位/摄像头/轨迹）。</p>
+    <p class="small mb-0 mt-2"><span class="text-muted">录屏专用：</span><a href="/demo/temp-hum-record">温湿度</a> · <a href="/static/record_smoke.html">烟雾</a></p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('hardware_teacher_module_page', module_key='temp_hum') }}">
+      <div class="card card-soft border-0 shadow-sm h-100 teacher-hw-hub-card">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">温湿度</h2>
+          <p class="small text-muted mb-0">查看实时与趋势曲线</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('hardware_teacher_module_page', module_key='smoke') }}">
+      <div class="card card-soft border-0 shadow-sm h-100 teacher-hw-hub-card">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">烟雾检测</h2>
+          <p class="small text-muted mb-0">查看浓度、预警与报警</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('hardware_teacher_module_page', module_key='infrared') }}">
+      <div class="card card-soft border-0 shadow-sm h-100 teacher-hw-hub-card">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">红外检测</h2>
+          <p class="small text-muted mb-0">查看区域有人/无人状态</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-12 col-md-6 col-xl-3">
+    <a class="text-decoration-none" href="{{ url_for('hardware_teacher_module_page', module_key='heart') }}">
+      <div class="card card-soft border-0 shadow-sm h-100 teacher-hw-hub-card">
+        <div class="card-body p-4">
+          <h2 class="h6 fw-bold mb-1">学生心率</h2>
+          <p class="small text-muted mb-0">查看心率/血氧与趋势</p>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}
+

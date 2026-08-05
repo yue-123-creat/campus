@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}可穿戴移动终端 · 学生详情{% endblock %}
+{% block head_extra %}
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+<style>
+  .wearable-detail-card {
+    border: 1px solid #d7e8f0 !important;
+    box-shadow: 0 2px 10px rgba(38, 88, 128, 0.06) !important;
+  }
+  .wearable-detail-title {
+    font-weight: 700;
+    color: #113a56;
+  }
+  .wearable-ble-left p {
+    margin-bottom: 0.45rem;
+  }
+  .wearable-ble-kv strong { font-weight: 800; }
+  .wearable-ble-table td, .wearable-ble-table th { white-space: nowrap; }
+  #wearableDetailGpsMap {
+    border: 1px solid #d7e8f0 !important;
+    background: #f8fbfd;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+  <a href="{{ url_for('hardware_admin_wearable_page') }}" class="btn btn-sm btn-outline-secondary rounded-pill">← 返回学生列表</a>
+  <span class="small text-muted">管理员 · 学生详情</span>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2 class="h5 fw-bold mb-1" id="wearableDetailName">{{ student.display_name or student.username }}</h2>
+      <p class="small text-muted mb-0">学号：<span id="wearableDetailStudentNo">{{ student.username }}</span></p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="today">今日</button>
+      <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="7d">近7天</button>
+      <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="30d">近30天</button>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12">
+    <article class="hw-card h-100 wearable-detail-card">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="h6 wearable-detail-title mb-0">实时心率</h3>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="today">今日</button>
+          <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="7d">近7天</button>
+          <button type="button" class="btn btn-sm btn-outline-primary hw-btn-range" data-range="30d">近30天</button>
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-12 col-xl-4">
+          <div class="p-3 rounded-4 border bg-white h-100">
+            <div class="small text-muted mb-1">心率（bpm）</div>
+            <div class="h3 fw-bold mb-2" id="wearableDetailHeartRate">—</div>
+            <div class="small text-muted mb-1">血氧（SpO2）</div>
+            <div class="h5 fw-semibold mb-2" id="wearableDetailSpo2">—</div>
+            <div class="small mb-2" id="wearableDetailHeartStatus">状态：—</div>
+            <div class="small text-muted">采样时间：<span id="wearableDetailHeartTime">—</span></div>
+            <div class="small text-muted mt-1" id="wearableDetailHeartHint">—</div>
+          </div>
+        </div>
+        <div class="col-12 col-xl-8">
+          <div class="p-3 rounded-4 border bg-white h-100">
+            <div id="wearableHeartChart" class="hw-chart hw-chart--heart"></div>
+            <p class="small text-muted mt-2 mb-0 d-none" id="wearableHeartTrendHint"></p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+  <div class="col-12">
+    <article class="hw-card h-100 wearable-detail-card">
+      <h3 class="h6 wearable-detail-title mb-3">蓝牙连接与定位</h3>
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-4">
+          <label class="form-label small text-muted mb-1" for="wearableBleDeviceId">设备编号 device_id</label>
+          <input id="wearableBleDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id" readonly />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1" for="wearableBleLimit">历史条数</label>
+          <input id="wearableBleLimit" type="number" value="10" class="form-control form-control-sm hw-input" min="1" max="5000" />
+        </div>
+        <div class="col-md-6 d-flex gap-2 flex-wrap">
+          <button type="button" id="wearableBleQueryBtn" class="btn btn-sm hw-btn-primary">查询定位</button>
+          <button type="button" id="wearableBleAutoBtn" class="btn btn-sm btn-outline-primary">自动刷新：关</button>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12 col-xl-4">
+          <div class="p-3 rounded-4 border bg-white h-100 wearable-ble-kv">
+            <p class="small fw-semibold mb-2">最新位置</p>
+            <p class="small mb-1">device_id：<strong id="wearableDetailBleDevice">—</strong></p>
+            <p class="small mb-1">X：<strong id="wearableDetailBleX">—</strong></p>
+            <p class="small mb-1">Y：<strong id="wearableDetailBleY">—</strong></p>
+            <p class="small mb-1">当前区域：<strong id="wearableDetailBleZone">—</strong></p>
+            <p class="small mb-1">定位时间：<strong id="wearableDetailBleTime">—</strong></p>
+            <p class="small mb-0 text-muted">连接状态：<span id="wearableDetailBleStatus">—</span></p>
+            <p class="small mb-0 text-muted mt-1">区域判定说明：<span id="wearableDetailBleZoneHint">—</span></p>
+          </div>
+        </div>
+        <div class="col-12 col-xl-8">
+          <div class="p-3 rounded-4 border bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <p class="small fw-semibold mb-0">历史数据</p>
+              <span class="small text-muted">按时间倒序</span>
+            </div>
+            <div class="table-responsive rounded-3 border bg-white">
+              <table class="table table-sm mb-0 wearable-ble-table">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">#</th>
+                    <th>device_id</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>区域</th>
+                    <th>timestamp</th>
+                    <th class="pe-3">create_time</th>
+                  </tr>
+                </thead>
+                <tbody id="wearableBleHistoryBody">
+                  <tr><td colspan="7" class="text-center text-muted py-3">请输入/确认 device_id 后查询</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+  <div class="col-12">
+    <article class="hw-card h-100 wearable-detail-card">
+      <h3 class="h6 wearable-detail-title mb-3">GPS 定位信息</h3>
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-4">
+          <label class="form-label small text-muted mb-1" for="wearableGpsDeviceId">设备编号 device_id</label>
+          <input id="wearableGpsDeviceId" class="form-control form-control-sm hw-input" placeholder="device_id" />
+        </div>
+        <div class="col-md-8 d-flex gap-2 flex-wrap">
+          <button type="button" id="wearableGpsQueryBtn" class="btn btn-sm hw-btn-primary">查询 GPS</button>
+          <button type="button" id="wearableGpsAutoBtn" class="btn btn-sm btn-outline-primary">自动刷新：关</button>
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-12 col-xl-4">
+          <div class="p-3 rounded-4 border bg-white h-100">
+            <div class="small mb-2">定位状态：<span id="wearableDetailGpsStatus">—</span></div>
+            <div class="small mb-1">设备ID：<span id="wearableDetailGpsDevice">—</span></div>
+            <div class="small mb-1">纬度：<span id="wearableDetailGpsLat">—</span></div>
+            <div class="small mb-1">经度：<span id="wearableDetailGpsLng">—</span></div>
+            <div class="small mb-1">海拔/速度：<span id="wearableDetailGpsAlt">—</span> / <span id="wearableDetailGpsSpeed">—</span></div>
+            <div class="small text-muted">采样时间：<span id="wearableDetailGpsTime">—</span></div>
+            <div class="small text-muted mt-2" id="wearableDetailGpsHint">暂无有效坐标时显示默认校园中心位置。</div>
+            <div class="mt-3 pt-2 border-top">
+              <label class="form-label small text-muted mb-1" for="wearableGpsLimit">历史条数</label>
+              <input id="wearableGpsLimit" type="number" value="100" class="form-control form-control-sm hw-input" min="1" max="5000" />
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-xl-8">
+          <div class="p-3 rounded-4 border bg-white h-100">
+            <div
+              id="wearableDetailGpsMap"
+              class="rounded-3"
+              style="height:280px"
+              data-tdt-key="fbc5632a1019b64bbcf703b9b76bdf61"
+              data-default-lng="103.9"
+              data-default-lat="30.8"
+              data-default-zoom="15"
+            ></div>
+            <div class="small text-muted mt-2">地图来源：国家地理信息公共服务平台 天地图</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.WEARABLE_STUDENT_ID = {{ student.id | int }};
+</script>
+<script>
+  // 复用硬件监测页的天地图初始化逻辑：先保证底图稳定渲染，再更新点位
+  (function () {
+    const mapBox = document.getElementById("wearableDetailGpsMap");
+    if (!mapBox) return;
+    const sdkBase = "https://api.tianditu.gov.cn/api?v=4.0&tk=";
+    const tk = (mapBox.dataset.tdtKey || "").trim();
+    if (!tk) return;
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    function toPoint(item) {
+      if (!item) return null;
+      const lat = Number(item.latitude);
+      const lng = Number(item.longitude);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+      return { lat, lng };
+    }
+    let map = null;
+    let marker = null;
+    let label = null;
+
+    function ensureSdk() {
+      if (window.T && window.T.Map) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const old = document.querySelector("script[data-wearable-tdt='1']");
+        if (old) {
+          old.addEventListener("load", resolve, { once: true });
+          old.addEventListener("error", () => reject(new Error("天地图脚本加载失败")), { once: true });
+          return;
+        }
+        const s = document.createElement("script");
+        s.src = sdkBase + encodeURIComponent(tk);
+        s.async = true;
+        s.defer = true;
+        s.dataset.wearableTdt = "1";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("天地图脚本加载失败"));
+        document.head.appendChild(s);
+      });
+    }
+    function initMap() {
+      if (map || !(window.T && window.T.Map)) return;
+      const lng = Number(mapBox.dataset.defaultLng || "103.9");
+      const lat = Number(mapBox.dataset.defaultLat || "30.8");
+      const zoom = Number(mapBox.dataset.defaultZoom || "15");
+      map = new T.Map("wearableDetailGpsMap");
+      map.centerAndZoom(
+        new T.LngLat(Number.isNaN(lng) ? 103.9 : lng, Number.isNaN(lat) ? 30.8 : lat),
+        Number.isNaN(zoom) ? 15 : zoom
+      );
+      if (map.enableScrollWheelZoom) map.enableScrollWheelZoom();
+    }
+    function draw(latestItem) {
+      if (!map) return;
+      const latest = toPoint(latestItem);
+      if (marker) { try { map.removeOverLay(marker); } catch (e) {} marker = null; }
+      if (label) { try { map.removeOverLay(label); } catch (e) {} label = null; }
+      if (latest) {
+        const ll = new T.LngLat(latest.lng, latest.lat);
+        marker = new T.Marker(ll); map.addOverLay(marker);
+        label = new T.Label({ text: "GPS 最新点位", position: ll, offset: new T.Point(12, -18) });
+        map.addOverLay(label);
+        const infoHtml =
+          "<div style='line-height:1.6;min-width:190px;'>" +
+          "<div><strong>device_id：</strong>" + esc(latestItem && latestItem.device_id) + "</div>" +
+          "<div><strong>纬度：</strong>" + esc(latest.lat) + "</div>" +
+          "<div><strong>经度：</strong>" + esc(latest.lng) + "</div>" +
+          "<div><strong>定位时间：</strong>" + esc(latestItem && latestItem.timestamp) + "</div>" +
+          "<div><strong>速度：</strong>" + esc(latestItem && latestItem.speed) + "</div>" +
+          "</div>";
+        if (window.T && T.InfoWindow) map.openInfoWindow(new T.InfoWindow(infoHtml, { offset: new T.Point(0, -24) }), ll);
+        map.centerAndZoom(ll, 15);
+      }
+    }
+
+    ensureSdk().then(function () {
+      initMap();
+      window.wearableGpsMapBridge = {
+        updateFromGpsData: function (latestItem) {
+          draw(latestItem);
+        },
+      };
+    }).catch(function () {});
+  })();
+</script>
+<script src="{{ url_for('static', filename='js/hardware-admin-wearable.js') }}"></script>
+{% endblock %}

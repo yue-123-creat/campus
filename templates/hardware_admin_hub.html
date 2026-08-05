@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}硬件监测 · 管理员主页{% endblock %}
+{% block head_extra %}
+<style>
+/* ========== 管理员硬件监测卡片：底部向上打光渐变光晕 ========== */
+body[data-role="admin"] .admin-hw-hub-card {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  background-color: #ffffff !important;
+  isolation: isolate;
+}
+
+/* 卡片内文字层级，确保文字在光晕上方 */
+body[data-role="admin"] .admin-hw-hub-card .card-body {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* 光晕伪元素基础样式 */
+body[data-role="admin"] .admin-hw-hub-card::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 28% !important; /* 光晕高度，和你示例的比例一致 */
+  pointer-events: none !important;
+  z-index: 1 !important;
+  display: none !important;
+  border-radius: 0 0 14px 14px !important;
+}
+
+/* 仅异常状态显示光晕 */
+body[data-role="admin"] .admin-hw-hub-card.card-low-risk::after,
+body[data-role="admin"] .admin-hw-hub-card.card-medium-risk::after,
+body[data-role="admin"] .admin-hw-hub-card.card-high-risk::after {
+  display: block !important;
+}
+
+/* 低危：黄色光晕（和示例的黄色效果一致） */
+body[data-role="admin"] .admin-hw-hub-card.card-low-risk::after {
+  background: linear-gradient(to top, rgba(250, 173, 20, 0.75) 0%, rgba(250, 173, 20, 0) 100%) !important;
+}
+
+/* 中危：橙色光晕 */
+body[data-role="admin"] .admin-hw-hub-card.card-medium-risk::after {
+  background: linear-gradient(to top, rgba(250, 140, 22, 0.75) 0%, rgba(250, 140, 22, 0) 100%) !important;
+}
+
+/* 高危：红色光晕（和示例的红色效果一致） */
+body[data-role="admin"] .admin-hw-hub-card.card-high-risk::after {
+  background: linear-gradient(to top, rgba(255, 77, 79, 0.75) 0%, rgba(255, 77, 79, 0) 100%) !important;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">硬件监测</h1>
+    <p class="text-muted small mb-0">请选择功能分类进入对应详情页；主页仅保留模块入口，减少信息堆叠。</p>
+    <p class="small mb-0 mt-2"><span class="text-muted">录屏专用：</span><a href="/demo/temp-hum-record">温湿度</a> · <a href="/static/record_smoke.html">烟雾</a></p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='temp_hum') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardTempHum"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">温湿度</h2><p class="small text-muted mb-0">查看实时与趋势曲线</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='smoke') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardSmoke"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">烟雾检测</h2><p class="small text-muted mb-0">查看浓度、预警与报警</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='infrared') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardIr"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">红外检测</h2><p class="small text-muted mb-0">查看区域有人/无人状态</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='crowd') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardCrowd"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">人员密度</h2><p class="small text-muted mb-0">查看雷达与热力趋势</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='camera') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardCamera"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">摄像头</h2><p class="small text-muted mb-0">查看画面与状态信息</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='voice') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardVoice"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">语音识别</h2><p class="small text-muted mb-0">查看语音与异常声记录</p></div></div></a></div>
+  <div class="col-12 col-md-6 col-xl-3"><a class="text-decoration-none" href="{{ url_for('hardware_admin_module_page', module_key='wearable') }}"><div class="card card-soft border-0 shadow-sm h-100 admin-hw-hub-card" id="hubCardWearable"><div class="card-body p-4"><h2 class="h6 fw-bold mb-1">可穿戴移动终端</h2><p class="small text-muted mb-0">按学生列表查看心率、蓝牙定位、GPS定位</p></div></div></a></div>
+</div>
+<script>
+(function () {
+  const isAdmin = String((document.body && document.body.dataset && document.body.dataset.role) || "").toLowerCase() === "admin";
+  if (!isAdmin) return;
+
+  function setRisk(el, level) {
+    if (!el) return;
+    el.classList.remove("card-low-risk", "card-medium-risk", "card-high-risk");
+    if (level === "low") el.classList.add("card-low-risk");
+    if (level === "medium") el.classList.add("card-medium-risk");
+    if (level === "high") el.classList.add("card-high-risk");
+  }
+
+  function mapAndRender(cards) {
+    const c = cards || {};
+    setRisk(document.getElementById("hubCardTempHum"), (c.temp_anomaly || c.humidity_anomaly) ? "low" : null);
+    if (c.smoke_alarm) setRisk(document.getElementById("hubCardSmoke"), c.smoke_level === "alarm" ? "high" : "medium");
+    else setRisk(document.getElementById("hubCardSmoke"), null);
+    setRisk(document.getElementById("hubCardIr"), !!c.ir_anomaly ? "low" : null);
+
+    const crowd = String(((c.crowd || {}).crowded) || "").toLowerCase();
+    const crowdLevel = (crowd && crowd !== "normal" && crowd !== "正常") ? "high" : null;
+    setRisk(document.getElementById("hubCardCrowd"), crowdLevel);
+
+    setRisk(document.getElementById("hubCardCamera"), (c.camera_ai && c.camera_ai.abnormal) ? "high" : null);
+    setRisk(document.getElementById("hubCardVoice"), (c.voice && c.voice.abnormal_sound) ? "medium" : null);
+
+    const spo2 = c.spo2 != null ? Number(c.spo2) : null;
+    const wearableAbn = !!c.heart_anomaly || (spo2 != null && spo2 < 95);
+    setRisk(document.getElementById("hubCardWearable"), wearableAbn ? "medium" : null);
+  }
+
+  async function refreshHubRisk() {
+    try {
+      const resp = await fetch("/api/hardware/overview", { cache: "no-store", credentials: "same-origin" });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      mapAndRender(data.cards || {});
+    } catch (e) {
+      // 保持静默：接口失败时不改动现有卡片状态
+    }
+  }
+
+  refreshHubRisk();
+  setInterval(refreshHubRisk, 30000);
+})();
+</script>
+{% endblock %}

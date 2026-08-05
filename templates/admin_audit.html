@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}审计日志 · 校园安全智能监测平台{% endblock %}
+{% block head_extra %}
+<script>window.PAGE_TYPE = "admin_audit";</script>
+{% endblock %}
+{% block content %}
+<div class="admin-page-head mb-3 mb-md-4">
+  <h1 class="h4 fw-bold text-events-title mb-1">审计与登录日志</h1>
+  <p class="text-muted small mb-0">管理员操作留痕、登录成功/失败记录（满足大赛合规演示）</p>
+</div>
+
+<ul class="nav nav-pills gap-2 mb-3">
+  <li class="nav-item">
+    <button type="button" class="nav-link active rounded-pill px-4" data-audit-tab="ops" id="tab-ops">操作审计</button>
+  </li>
+  <li class="nav-item">
+    <button type="button" class="nav-link rounded-pill px-4" data-audit-tab="login" id="tab-login">登录日志</button>
+  </li>
+</ul>
+
+<div id="panel-ops" class="card card-soft border-0 shadow-sm overflow-hidden">
+  <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center">
+    <span class="fw-semibold text-stat-title">操作记录</span>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="audit-refresh-ops">刷新</button>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 admin-table table-sm">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">时间</th>
+          <th>用户</th>
+          <th>动作</th>
+          <th>目标</th>
+          <th>详情</th>
+          <th class="pe-3">IP</th>
+        </tr>
+      </thead>
+      <tbody id="audit-ops-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="panel-login" class="card card-soft border-0 shadow-sm overflow-hidden d-none">
+  <div class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center">
+    <span class="fw-semibold text-stat-title">登录记录</span>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="audit-refresh-login">刷新</button>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 admin-table table-sm">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">时间</th>
+          <th>用户</th>
+          <th>结果</th>
+          <th class="pe-3">IP</th>
+        </tr>
+      </thead>
+      <tbody id="audit-login-body"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}校园安全智能监测平台{% endblock %}</title>
+  <!-- Bootstrap 5：全局栅格与组件 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="app-body {{ (current_role or '') ~ '-page' if current_role else '' }}" data-role="{{ current_role or '' }}">
+  {% if session.get('user') %}
+  <div class="sidebar-backdrop d-md-none" id="sidebarBackdrop" aria-hidden="true"></div>
+
+  <aside class="app-sidebar" id="appSidebar" aria-label="主导航">
+    <div class="app-sidebar-brand">
+      <span class="app-sidebar-brand-line1">校园安全</span>
+      <span class="app-sidebar-brand-line2">智能监测</span>
+    </div>
+    <nav class="app-sidebar-nav flex-grow-1 py-2">
+      {# 主导航：系统概览 / 硬件监测(安保为人员密度监测) / 告警管理 / 系统设置 #}
+      <a class="app-sidebar-link{% if request.endpoint == 'home' %} is-active active{% endif %}" href="{{ url_for('home') }}">系统概览</a>
+      {% if current_role in ['teacher', 'security', 'admin'] %}
+      <a class="app-sidebar-link{% if request.endpoint == 'hardware_dashboard' %} is-active active{% endif %}" href="{{ url_for('hardware_dashboard') }}">{% if current_role == 'security' %}人员密度监测{% else %}硬件监测{% endif %}</a>
+      {% endif %}
+      {% if current_role in ['security', 'admin'] %}
+      <a class="app-sidebar-link{% if request.endpoint == 'history_page' %} is-active active{% endif %}" href="{{ url_for('history_page') }}">历史数据</a>
+      {% endif %}
+      {% if current_role == 'admin' %}
+      <a class="app-sidebar-link{% if request.endpoint == 'admin_alerts_page' %} is-active active{% endif %}" href="{{ url_for('admin_alerts_page') }}">管理员工作台</a>
+      <a class="app-sidebar-link{% if request.endpoint == 'admin_student_ai_page' %} is-active active{% endif %}" href="{{ url_for('admin_student_ai_page') }}">学生AI研判</a>
+      {% endif %}
+      {% if current_role in ['security', 'admin'] %}
+      <a class="app-sidebar-link{% if request.endpoint == 'events_page' %} is-active active{% endif %}" href="{{ url_for('events_page') }}">告警管理</a>
+      {% endif %}
+      <a class="app-sidebar-link{% if request.endpoint == 'settings_page' %} is-active active{% endif %}" href="{{ url_for('settings_page') }}">系统设置</a>
+      {% if current_role == 'student' %}
+      {% set vent_mods = (session.get('user') or {}).get('allowed_modules') or ['*'] %}
+      {% if vent_mods is not iterable or vent_mods is string %}
+      {% set vent_mods = ['*'] %}
+      {% endif %}
+      {% if '*' in vent_mods or 'vent_room' in vent_mods %}
+      <a class="app-sidebar-link{% if request.endpoint == 'student_vent_room_page' %} is-active active{% endif %}" href="{{ url_for('student_vent_room_page') }}">学生倾诉室</a>
+      {% endif %}
+      <a class="app-sidebar-link{% if request.endpoint == 'student_self_service_page' %} is-active active{% endif %}" href="{{ url_for('student_self_service_page') }}">学生自助</a>
+      <a class="app-sidebar-link{% if request.endpoint == 'student_health_location_page' %} is-active active{% endif %}" href="{{ url_for('student_health_location_page') }}">我的健康与位置</a>
+      <a class="app-sidebar-link{% if request.endpoint == 'student_emergency_alarm_page' %} is-active active{% endif %}" href="{{ url_for('student_emergency_alarm_page') }}">一键紧急报警</a>
+      {% endif %}
+    </nav>
+  </aside>
+
+  <div class="app-main-wrap">
+    <header class="app-topbar">
+      <button type="button" class="app-menu-btn d-md-none btn btn-light border-0 rounded-3 shadow-sm" id="sidebarToggle" aria-expanded="false" aria-controls="appSidebar" aria-label="打开或关闭导航菜单">
+        <svg class="app-icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h1 class="app-topbar-title mb-0 text-truncate">校园安全智能监测</h1>
+      <div class="app-topbar-actions d-flex align-items-center gap-2 flex-shrink-0">
+        <span class="app-topbar-user text-muted small d-none d-sm-inline">{{ session['user']['username'] }} · {{ current_role_label }}</span>
+        <a class="btn btn-sm btn-primary rounded-pill px-3 app-topbar-logout" href="{{ url_for('logout') }}">退出</a>
+      </div>
+    </header>
+
+    <div class="app-main-inner">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ECharts 5 + Bootstrap JS：先加载图表库再加载业务脚本 -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block vendor_scripts %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

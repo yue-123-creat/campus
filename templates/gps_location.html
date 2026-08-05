@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}GPS 定位 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h4 fw-bold text-stat-title mb-1">GPS 定位展示</h2>
+    <p class="text-muted mb-0">平台展示硬件端上传的经纬度信息（支持高度、速度）。</p>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-5">
+        <label for="gps-device-id" class="form-label small text-muted mb-1">设备编号 device_id</label>
+        <input id="gps-device-id" class="form-control app-form-touch" placeholder="例如：gps-001" />
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="gps-limit" class="form-label small text-muted mb-1">历史条数</label>
+        <input id="gps-limit" type="number" class="form-control app-form-touch" min="1" max="5000" value="100" />
+      </div>
+      <div class="col-6 col-md-5 d-flex gap-2">
+        <button id="gps-query-btn" type="button" class="btn btn-primary app-touch-btn flex-grow-1">查询</button>
+        <button id="gps-auto-btn" type="button" class="btn btn-outline-primary app-touch-btn flex-grow-1">自动刷新：关</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gps-msg" class="alert alert-info d-none py-2"></div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold">最新位置</div>
+      <div class="card-body">
+        <div class="small text-muted mb-2">按设备独立查询，互不覆盖</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">device_id</span><strong id="gps-latest-device">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">纬度 latitude</span><strong id="gps-latest-latitude">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">经度 longitude</span><strong id="gps-latest-longitude">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">海拔 altitude</span><strong id="gps-latest-altitude">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">速度 speed</span><strong id="gps-latest-speed">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">定位时间</span><strong id="gps-latest-ts">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">入库时间</span><strong id="gps-latest-ct">—</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold">历史轨迹（列表）</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">#</th>
+                <th>device_id</th>
+                <th>latitude</th>
+                <th>longitude</th>
+                <th>altitude</th>
+                <th>speed</th>
+                <th>timestamp</th>
+                <th class="pe-3">create_time</th>
+              </tr>
+            </thead>
+            <tbody id="gps-history-body">
+              <tr><td colspan="8" class="text-center text-muted py-4">请输入 device_id 后查询</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gps-location.js') }}"></script>
+{% endblock %}

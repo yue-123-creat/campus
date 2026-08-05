@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}蓝牙定位 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h2 class="h4 fw-bold text-stat-title mb-1">蓝牙定位展示</h2>
+    <p class="text-muted mb-0">平台仅展示硬件端上传的最终坐标，不参与定位算法计算。</p>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-5">
+        <label for="ble-device-id" class="form-label small text-muted mb-1">设备编号 device_id</label>
+        <input id="ble-device-id" class="form-control app-form-touch" placeholder="例如：esp32-s3-001" />
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="ble-limit" class="form-label small text-muted mb-1">历史条数</label>
+        <input id="ble-limit" type="number" class="form-control app-form-touch" min="1" max="5000" value="100" />
+      </div>
+      <div class="col-6 col-md-5 d-flex gap-2">
+        <button id="ble-query-btn" type="button" class="btn btn-primary app-touch-btn flex-grow-1">查询</button>
+        <button id="ble-auto-btn" type="button" class="btn btn-outline-primary app-touch-btn flex-grow-1">自动刷新：关</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ble-msg" class="alert alert-info d-none py-2"></div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold">最新位置</div>
+      <div class="card-body">
+        <div class="small text-muted mb-2">按设备独立查询，互不覆盖</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">device_id</span><strong id="ble-latest-device">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">X</span><strong id="ble-latest-x">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">Y</span><strong id="ble-latest-y">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">当前区域</span><strong id="ble-latest-zone-text">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">定位时间</span><strong id="ble-latest-ts">—</strong></li>
+          <li class="list-group-item px-0 d-flex justify-content-between"><span class="text-muted">入库时间</span><strong id="ble-latest-ct">—</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-8">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold">历史轨迹（列表）</div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">#</th>
+                <th>device_id</th>
+                <th>X</th>
+                <th>Y</th>
+                <th>区域</th>
+                <th>timestamp</th>
+                <th class="pe-3">create_time</th>
+              </tr>
+            </thead>
+            <tbody id="ble-history-body">
+              <tr><td colspan="7" class="text-center text-muted py-4">请输入 device_id 后查询</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ble-location.js') }}"></script>
+{% endblock %}

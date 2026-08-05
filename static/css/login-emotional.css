@@ -1,0 +1,382 @@
+/* 登录页：照片左栏 + 局部漩涡动效 + 白底表单 */
+.login-page--emotional {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #ffffff;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --login-photo: url("../images/login-swirl-road.jpg");
+  --emo-accent: #2d6a4f;
+  --emo-accent-light: #40916c;
+  --emo-accent-soft: rgba(45, 106, 79, 0.12);
+  --emo-sky: #7eb8da;
+  --emo-green: #52b788;
+}
+
+.login-emo-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@media (min-width: 992px) {
+  .login-emo-layout {
+    flex-direction: row;
+  }
+}
+
+/* —— 左侧照片区 —— */
+.login-emo-visual {
+  position: relative;
+  flex: 1 1 52%;
+  min-height: 38vh;
+  overflow: hidden;
+  background-color: #dce8e0;
+  --login-bg-pos: center 42%;
+  --login-bg-size: cover;
+}
+
+@media (min-width: 992px) {
+  .login-emo-visual {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+.login-emo-photo,
+.login-vortex-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+}
+
+.login-vortex-source {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 右侧晕染过渡到白底 */
+.login-emo-visual-fade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    linear-gradient(
+      105deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.02) 45%,
+      rgba(255, 255, 255, 0.55) 72%,
+      rgba(255, 255, 255, 0.92) 88%,
+      #ffffff 100%
+    );
+}
+
+@media (max-width: 991.98px) {
+  .login-emo-visual-fade {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.15) 55%,
+        rgba(255, 255, 255, 0.88) 88%,
+        #ffffff 100%
+      );
+  }
+}
+
+.login-emo-tagline {
+  position: absolute;
+  left: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  z-index: 2;
+  margin: 0;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 8px rgba(15, 40, 30, 0.45);
+  background: rgba(30, 60, 45, 0.28);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+}
+
+@media (max-width: 991.98px) {
+  .login-emo-tagline {
+    display: none;
+  }
+}
+
+/* —— 右侧表单 —— */
+.login-emo-form-panel {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 4vw, 2.5rem);
+  padding-bottom: calc(clamp(1.5rem, 4vw, 3rem) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(165deg, #ffffff 0%, #f8fbfa 55%, #f4f9f6 100%);
+}
+
+@media (min-width: 992px) {
+  .login-emo-form-panel {
+    flex: 0 0 46%;
+    max-width: 540px;
+    margin-left: -4%;
+    z-index: 2;
+  }
+}
+
+.login-emo-form-inner {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 1rem;
+  transition: box-shadow 0.35s ease;
+}
+
+.login-emo-form-inner.is-error {
+  animation: login-form-shake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  box-shadow:
+    0 0 0 1px rgba(239, 68, 68, 0.35),
+    0 0 28px rgba(239, 68, 68, 0.28),
+    0 0 56px rgba(239, 68, 68, 0.12);
+}
+
+@keyframes login-form-shake {
+  0%, 100% { transform: translateX(0); }
+  12% { transform: translateX(-10px); }
+  24% { transform: translateX(10px); }
+  36% { transform: translateX(-8px); }
+  48% { transform: translateX(8px); }
+  60% { transform: translateX(-4px); }
+  72% { transform: translateX(4px); }
+}
+
+.login-emo-welcome {
+  font-size: clamp(1.5rem, 4vw, 1.75rem);
+  font-weight: 700;
+  color: #1a2e28;
+  margin: 0 0 0.35rem;
+  line-height: 1.25;
+}
+
+.login-emo-subtitle {
+  font-size: 0.9375rem;
+  color: #5c7268;
+  margin: 0 0 1.75rem;
+  line-height: 1.5;
+}
+
+.login-emo-field {
+  margin-bottom: 1.125rem;
+}
+
+.login-emo-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334d42;
+  margin-bottom: 0.4rem;
+}
+
+.login-emo-input {
+  width: 100%;
+  border: 1.5px solid #dde8e3;
+  border-radius: 0.625rem;
+  padding: 0.7rem 1rem;
+  font-size: 1rem;
+  color: #1a2e28;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-emo-input:focus {
+  outline: none;
+  border-color: var(--emo-accent-light);
+  box-shadow: 0 0 0 3px var(--emo-accent-soft);
+}
+
+.login-emo-input.is-valid {
+  border-color: #52b788;
+}
+
+.login-emo-input.is-invalid {
+  border-color: #ef4444;
+}
+
+.login-emo-form-inner.is-error .login-emo-input--password {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.login-emo-password-wrap {
+  position: relative;
+}
+
+.login-emo-input--password {
+  padding-right: 3rem;
+}
+
+.login-emo-eye {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #5c7268;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-emo-eye:hover {
+  background: #eef5f1;
+  color: var(--emo-accent);
+}
+
+.login-emo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.login-emo-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-emo-remember input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--emo-accent);
+}
+
+.login-emo-forgot {
+  color: var(--emo-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-emo-forgot:hover {
+  text-decoration: underline;
+}
+
+.login-emo-submit {
+  width: 100%;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--emo-accent-light) 0%, var(--emo-accent) 100%);
+  box-shadow: 0 4px 16px rgba(45, 106, 79, 0.28);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login-emo-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(45, 106, 79, 0.34);
+}
+
+.login-emo-signup {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.login-emo-signup a {
+  color: var(--emo-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-emo-signup a:hover {
+  text-decoration: underline;
+}
+
+.login-emo-alert {
+  border-radius: 0.625rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+}
+
+/* 快速填入账号 */
+.login-emo-demo {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #dde8e3;
+}
+
+.login-emo-demo-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #5c7268;
+  margin-bottom: 0.6rem;
+}
+
+.login-emo-demo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.login-emo-demo-chip {
+  flex: 1 1 calc(50% - 0.25rem);
+  min-width: 9rem;
+  text-align: left;
+  border: 1.5px solid #dde8e3;
+  background: #f8fbfa;
+  border-radius: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.login-emo-demo-chip:hover {
+  background: #eef5f1;
+  border-color: #95d5b2;
+}
+
+.login-emo-demo-role {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--emo-accent);
+  margin-bottom: 0.1rem;
+}
+
+.login-emo-demo-pair {
+  display: block;
+  font-size: 0.75rem;
+  color: #475569;
+  word-break: break-all;
+}

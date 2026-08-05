@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="stat-page-root">
+  <div class="stat-page-head mb-3 mb-md-4">
+    <h1 class="h4 fw-bold text-stat-title mb-1">统计分析</h1>
+    <p class="text-muted small mb-0">事件分布、风险热区与趋势复盘；支持时间/区域/类型钻取与硬件数据视图</p>
+  </div>
+
+  <div id="stat-drill-toolbar" class="card card-soft border-0 shadow-sm mb-3 mb-md-4">
+    <div class="card-body py-3 px-3 px-md-4">
+      <p class="small fw-semibold text-stat-title mb-2">多维钻取（影响上方三图与摘要卡片）</p>
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-md-2">
+          <label class="form-label small text-muted mb-1">时间范围</label>
+          <select id="stat-drill-days" class="form-select rounded-3 form-select-sm">
+            <option value="-1">全部时间</option>
+            <option value="7" selected>近 7 天</option>
+            <option value="30">近 30 天</option>
+            <option value="90">近 90 天</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label class="form-label small text-muted mb-1">区域/地点关键词</label>
+          <input id="stat-drill-zone" class="form-control form-control-sm rounded-3" placeholder="如 教学楼、食堂">
+        </div>
+        <div class="col-12 col-sm-6 col-md-2">
+          <label class="form-label small text-muted mb-1">事件类型</label>
+          <select id="stat-drill-type" class="form-select rounded-3 form-select-sm">
+            <option value="">全部</option>
+            <option value="violence">暴力</option>
+            <option value="bullying">欺凌</option>
+            <option value="crowd">聚集</option>
+            <option value="abnormal">异常行为</option>
+            <option value="follow">尾随</option>
+            <option value="normal">常规</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3 d-flex gap-2">
+          <button type="button" class="btn btn-primary btn-sm rounded-3 flex-grow-1" id="stat-drill-apply">应用筛选</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm rounded-3" id="stat-drill-reset" title="恢复为全库统计">全库</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-soft border-0 shadow-sm mb-3 mb-md-4 stat-toolbar-card">
+    <div class="card-body py-3 px-3 px-md-4">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
+        <p class="text-muted small mb-0 stat-toolbar-desc">演示数据与硬件上报走同一入库链路。</p>
+        <div class="d-grid gap-2 d-md-flex flex-md-shrink-0 stat-toolbar-btns">
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-3 app-touch-btn" onclick="seedDemo(false)">追加演示数据</button>
+          <button type="button" class="btn btn-sm btn-outline-danger rounded-3 app-touch-btn" onclick="if(confirm('将清空事件与硬件上报表，确定？')) seedDemo(true)">清空并注入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-pc-grid-wrap mb-3 mb-md-4">
+    <div class="row g-3 g-md-4 stat-charts-row mb-0">
+      <div class="col-12 col-lg-4">
+        <div class="card card-soft border-0 shadow-sm h-100 stat-chart-card">
+          <div class="card-header stat-chart-card-header border-0">事件类型分布</div>
+          <div class="card-body stat-chart-card-body">
+            <div id="chart-type" class="chart-box"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card card-soft border-0 shadow-sm h-100 stat-chart-card">
+          <div class="card-header stat-chart-card-header border-0">区域风险热区</div>
+          <div class="card-body stat-chart-card-body">
+            <div id="chart-heat" class="chart-box"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="card card-soft border-0 shadow-sm h-100 stat-chart-card">
+          <div class="card-header stat-chart-card-header border-0">时段分布</div>
+          <div class="card-body stat-chart-card-body">
+            <div id="chart-hour" class="chart-box"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-soft border-0 shadow-sm stat-trend-card mb-0">
+      <div class="card-header stat-chart-card-header border-0 d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 py-3 px-3 px-md-4">
+        <span class="fw-semibold text-stat-title">事件趋势</span>
+        <div class="d-grid gap-2 d-sm-inline-flex flex-sm-row stat-period-btns flex-wrap" role="group" aria-label="报表周期">
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-3 app-touch-btn stat-period-btn stat-pc-period-btn" data-stat-period="day" onclick="loadReports('day')">日报</button>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-3 app-touch-btn stat-period-btn stat-pc-period-btn" data-stat-period="week" onclick="loadReports('week')">周报</button>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-3 app-touch-btn stat-period-btn stat-pc-period-btn" data-stat-period="month" onclick="loadReports('month')">月报</button>
+        </div>
+      </div>
+      <div class="card-body stat-trend-body px-2 px-md-3 pb-3 pb-md-4">
+        <div id="report-trend" class="chart-box chart-box-tall"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stat-pc-summary" class="u-pc1024-block row g-3 g-md-4 mb-4 stat-pc-summary-row" aria-label="事件统计概览"></div>
+
+  <h2 class="h6 fw-bold text-stat-title mb-3 mt-4">对比分析</h2>
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-header stat-chart-card-header border-0">各区域安全事件对比</div>
+        <div class="card-body stat-chart-card-body">
+          <div id="chart-compare-zone" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-header stat-chart-card-header border-0">时段人流（传感器上报聚合）</div>
+        <div class="card-body stat-chart-card-body">
+          <div id="chart-compare-hour" class="chart-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="h6 fw-bold text-stat-title mb-3">硬件数据可视化</h2>
+  <div id="stat-hardware-loading" class="text-muted small mb-2 d-none">加载传感器数据…</div>
+  <div class="row g-3 mb-2" id="stat-people-cards"></div>
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-header stat-chart-card-header border-0">环境：温湿度与烟雾</div>
+        <div class="card-body stat-chart-card-body">
+          <div id="chart-env" class="chart-box chart-box-tall"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-header stat-chart-card-header border-0">门禁：开闭记录（异常标红）</div>
+        <div class="card-body stat-chart-card-body">
+          <div id="chart-door" class="chart-box chart-box-tall"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card card-soft border-0 shadow-sm h-100">
+        <div class="card-header stat-chart-card-header border-0">通信链路：延迟、丢包、状态</div>
+        <div class="card-body stat-chart-card-body">
+          <div id="chart-link" class="chart-box chart-box-tall"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block vendor_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+{% endblock %}
+{% block scripts %}
+<script>window.PAGE_TYPE = "statistics";</script>
+{% endblock %}

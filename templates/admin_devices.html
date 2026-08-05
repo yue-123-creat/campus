@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}设备管理 · 校园安全智能监测平台{% endblock %}
+{% block head_extra %}
+<script>window.PAGE_TYPE = "admin_devices";</script>
+{% endblock %}
+{% block content %}
+<div class="admin-page-head mb-3 mb-md-4">
+  <h1 class="h4 fw-bold text-events-title mb-1">设备管理</h1>
+  <p class="text-muted small mb-0">STM32 / ESP32 在线状态、区域分布、远程配置与指令（数据每 10 秒自动刷新）</p>
+</div>
+
+<div id="admin-dev-loading" class="admin-loading card card-soft border-0 shadow-sm mb-3 d-none">
+  <div class="card-body py-4 text-center text-muted small">正在加载设备数据…</div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold text-stat-title">设备在线率</div>
+      <div class="card-body p-2">
+        <div id="admin-chart-device-pie" class="admin-chart-box"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold text-stat-title">按区域设备分布</div>
+      <div class="card-body p-2">
+        <div id="admin-chart-zone-heat" class="admin-chart-box"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-header border-0 bg-transparent fw-semibold text-stat-title">健康度仪表盘</div>
+      <div class="card-body p-2">
+        <div id="admin-chart-health" class="admin-chart-box"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-3 p-md-4">
+    <h2 class="h6 fw-semibold mb-3">预注册 / 手动添加设备</h2>
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">设备 ID</label>
+        <input id="dev-new-id" class="form-control rounded-3" placeholder="如 stm32-lab-01">
+      </div>
+      <div class="col-12 col-md-2">
+        <label class="form-label small text-muted mb-1">类型</label>
+        <select id="dev-new-type" class="form-select rounded-3">
+          <option value="stm32">STM32</option>
+          <option value="esp32">ESP32</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <label class="form-label small text-muted mb-1">区域</label>
+        <input id="dev-new-zone" class="form-control rounded-3" placeholder="教学楼">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">部署位置</label>
+        <input id="dev-new-loc" class="form-control rounded-3" placeholder="实验室 A-门口">
+      </div>
+      <div class="col-12 col-md-2 d-grid">
+        <button type="button" class="btn btn-primary rounded-3" id="dev-btn-add">添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm overflow-hidden">
+  <div class="card-header border-0 bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span class="fw-semibold text-stat-title">设备列表</span>
+    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="dev-btn-refresh">立即刷新</button>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 admin-table">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">设备 ID</th>
+          <th>名称</th>
+          <th>类型</th>
+          <th>区域</th>
+          <th>位置</th>
+          <th>状态</th>
+          <th>最后上报</th>
+          <th class="text-end pe-3">操作</th>
+        </tr>
+      </thead>
+      <tbody id="admin-dev-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="devEditModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0">
+        <h3 class="modal-title h6 fw-bold">编辑设备配置</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <input type="hidden" id="dev-edit-id">
+        <div class="mb-2">
+          <label class="form-label small text-muted">上报间隔 (秒)</label>
+          <input type="number" class="form-control rounded-3" id="dev-edit-interval" min="5" placeholder="60">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small text-muted">摄像头分辨率 (ESP32)</label>
+          <input type="text" class="form-control rounded-3" id="dev-edit-res" placeholder="640x480">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small text-muted">帧率 FPS</label>
+          <input type="number" class="form-control rounded-3" id="dev-edit-fps" min="1" max="60" placeholder="15">
+        </div>
+        <p class="small text-muted mb-0">保存后写入 config_json，硬件下次心跳或拉取指令时同步。</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary rounded-pill" id="dev-edit-save">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block vendor_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4 kb-pc-page-row">
+  <div class="col-12 col-xl-10 col-xxl-9 mx-auto kb-pc-page-main">
+    <h1 class="h4 fw-semibold kb-section-title mb-2">安全知识库</h1>
+    <p class="text-muted small mb-4">向知识库提问，获取规范处置与安全指引；下方为常用安全知识推荐。</p>
+
+    <div class="card card-soft border-0 shadow-sm mb-4 kb-pc-search-card">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-sm-row gap-2 mb-3 kb-pc-search-row">
+          <input id="knowledge-question" class="form-control form-control-lg rounded-3 app-form-touch kb-input-focus" placeholder="例如：如何处置欺凌初期事件？">
+          <button class="btn btn-primary btn-lg rounded-3 px-4 flex-shrink-0 app-touch-btn kb-pc-ask-btn" type="button" onclick="askKnowledge()">提问</button>
+        </div>
+        <div id="knowledge-answer" class="alert alert-kb-answer rounded-3 d-none" role="status"></div>
+        <ul id="knowledge-hits" class="list-group list-group-flush rounded-3 border mt-3"></ul>
+      </div>
+    </div>
+
+    <h2 class="h5 kb-section-title mb-2">安全知识推荐</h2>
+    <p class="text-muted small mb-3">以下 8 条为校园常见安全要点，可上下滚动浏览；点击「查看完整内容」展开详情。</p>
+
+    <div class="kb-recommend-scroll pe-1 kb-pc-rec-scroll">
+      <div class="kb-rec-cards-grid">
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">校园防欺凌</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">及时发现、制止与报告；保护受害者，避免二次伤害，依法依规联动班主任与心理老师。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec1" role="button" aria-expanded="false" aria-controls="kbRec1">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec1">
+            发现欺凌苗头时，应先确保受害者人身安全，避免当众指责激化矛盾。值班人员或教师应分别了解情况、固定必要证据（记录时间地点与经过），按校规启动调查与处分程序，并通知班主任持续关注班级氛围。对受欺凌学生安排心理辅导与家校沟通，对实施欺凌学生进行教育与行为矫正，必要时引入法治副校长或社区资源。平台告警可作为线索，须与现场核实相结合。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">消防安全</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">保持通道畅通，熟悉灭火器与疏散路线；遇火情先报警、再组织疏散，切勿乘坐电梯。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec2" role="button" aria-expanded="false" aria-controls="kbRec2">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec2">
+            教学楼、宿舍内严禁违规用电与明火，定期检查消防栓、灭火器与应急照明。开展演练时明确集合点与清点人数流程。初起小火在确保安全前提下可使用就近灭火器扑救；火势蔓延时立即拨打 119，组织人员沿疏散指示低姿撤离，关闭防火门延缓烟气扩散。事后配合消防部门调查，复盘改进预案。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">防诈骗与个人信息保护</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">警惕「转账、中奖、冒充老师」等话术；不向陌生人透露验证码、银行卡与学籍信息。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec3" role="button" aria-expanded="false" aria-controls="kbRec3">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec3">
+            师生及家长遇自称「公检法」「教务」「快递理赔」等要求转账或屏幕共享时，应通过官方电话或到校当面核实。班级群应设置入群验证，重要收费通知以学校盖章文件为准。发现可疑链接不点击、不填写个人信息，留存聊天记录并向学校保卫部门或公安机关反映。定期开展反诈宣传，更新常见骗术案例库。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">突发事件应急处置</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">先控险、再救人、后报告；统一指挥、分工明确，避免围观拥堵，配合医疗与警方处置。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec4" role="button" aria-expanded="false" aria-controls="kbRec4">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec4">
+            校园内发生人员受伤、冲突升级或可疑物品等情况时，第一发现人应迅速判明风险半径，必要时疏散周边人群并拨打 120、110。安保与值班干部到场后设立警戒区，保护现场证据，按应急预案向上级报告。信息发布由学校指定部门统一口径，避免谣言扩散。事后组织复盘，完善监测点位与联动流程。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">实验室与实训安全</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">实验前检查设备与通风，规范穿戴防护；危险品专柜管理，严禁饮食与擅离操作台。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec5" role="button" aria-expanded="false" aria-controls="kbRec5">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec5">
+            进入实验室须遵守操作规程，了解化学品 MSDS 与应急处置措施。用电设备远离水源，离开前关闭电源与气源。发生少量泄漏按预案吸附或中和，大量泄漏立即撤离并报告。实训车间注意机械防护与急停按钮位置，禁止佩戴宽松饰物。学校应定期检查消防设施与洗眼器，保留巡检记录。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">食堂与食品安全</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">原料可追溯、留样规范；从业人员健康与卫生达标，生熟分开，预防食物中毒。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec6" role="button" aria-expanded="false" aria-controls="kbRec6">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec6">
+            食堂应执行进货查验与台账制度，冷链与易腐食材按规定储存。每餐成品留样并记录，餐具消毒达标。发现师生就餐后异常症状，立即停售可疑食品、封存留样并报告卫健与市场监管部门。开展食安教育与「光盘行动」，预防拥挤踩踏，高峰时段可引导分批就餐。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">体育活动与课间安全</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">运动前热身、场地器材检查；剧烈对抗与楼梯拐角处加强巡查，预防碰撞与跌倒。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec7" role="button" aria-expanded="false" aria-controls="kbRec7">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec7">
+            体育课与课外活动应据学生体质分组教学，器材损坏及时停用报修。运动会与大型集会事先制定安全方案与医疗点布置。课间与放学高峰在楼梯口、走廊安排值勤，提醒不奔跑推搡。高温、雾霾等恶劣天气调整户外活动。发生扭伤、骨折等先制动、冰敷并送医，避免随意搬动脊柱损伤疑似者。
+          </div>
+        </div>
+      </div>
+
+      <div class="kb-rec-card mb-3">
+        <div class="kb-rec-head">心理健康与求助渠道</div>
+        <div class="kb-rec-body">
+          <p class="kb-rec-summary">关注情绪与社交变化，消除求助污名；校内心理辅导与危机热线协同，早发现早干预。</p>
+          <a class="kb-rec-toggle collapsed" data-bs-toggle="collapse" href="#kbRec8" role="button" aria-expanded="false" aria-controls="kbRec8">查看完整内容</a>
+          <div class="collapse kb-rec-full" id="kbRec8">
+            班主任与任课教师应注意学生长期情绪低落、自伤言行或社交退缩等信号，及时与心理老师沟通。开展生命教育与反欺凌宣传，公布心理咨询预约方式与保密原则。遇自伤自杀风险时启动危机干预流程，确保有人陪护并联系家长与专业机构。平台行为类告警可作为关注线索，须尊重隐私、避免标签化，以支持与转介为主。
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="col-12 kb-pc-page-aside u-pc1024-block" aria-label="热门与公告">
+    <div class="card card-soft border-0 shadow-sm mb-3 kb-pc-side-card">
+      <div class="card-header kb-pc-side-head border-0">热门知识榜单</div>
+      <div class="card-body small">
+        <ol class="kb-pc-hot-list ps-3 mb-0 text-muted">
+          <li class="mb-2"><span class="text-dark fw-medium">防欺凌</span> — 初期识别与干预</li>
+          <li class="mb-2"><span class="text-dark fw-medium">消防</span> — 疏散与器材使用</li>
+          <li class="mb-2"><span class="text-dark fw-medium">反诈</span> — 个人信息保护</li>
+          <li class="mb-2"><span class="text-dark fw-medium">实验室</span> — 危化与防护</li>
+          <li class="mb-0"><span class="text-dark fw-medium">心理</span> — 求助渠道与危机</li>
+        </ol>
+      </div>
+    </div>
+    <div class="card card-soft border-0 shadow-sm kb-pc-side-card">
+      <div class="card-header kb-pc-side-head border-0">最新安全公告</div>
+      <div class="card-body small text-muted">
+        <p class="mb-2">平台已接入监控 AI 研判与短信 Webhook，请保持值班手机畅通。</p>
+        <p class="mb-0">本周保卫处将抽查各楼宇消防通道，请配合自检。</p>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.PAGE_TYPE = "knowledge";</script>
+{% endblock %}

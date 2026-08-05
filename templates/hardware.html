@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{% if current_role == 'security' %}人员密度监测 · 校园安全智能监测平台{% else %}硬件监测 · 校园安全智能监测平台{% endif %}{% endblock %}
+{% block head_extra %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+{% set hw_mode = 'live' %}
+{% if current_role == 'security' %}
+{% set hw_heading = '人员密度监测' %}
+{% set hw_sub = '仅保留人员密度：实时密度数据、热力分布、趋势回溯（自动/手动刷新 + 时间范围查询）' %}
+{% else %}
+{% set hw_heading = '硬件数据可视化' %}
+{% set hw_sub = '温湿度 · 烟雾 · 红外 · 心率 · 近24小时曲线与实时卡片' %}
+{% endif %}
+{% include 'partials/hardware_dashboard.html' %}
+{% endblock %}
+
+{% block vendor_scripts %}{# ECharts 已在 base.html 中全局引入 #}{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hardware-dashboard.js') }}"></script>
+{% endblock %}

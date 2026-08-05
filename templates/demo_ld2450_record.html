@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% block title %}人员密度监测{% endblock %}
+{% block head_extra %}
+<style>
+  .demo-ld-page { max-width: 920px; margin: 0 auto; }
+  .demo-ld-page .demo-topbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .demo-seq-metric .demo-val { min-width: 4.5rem; text-align: right; transition: color 0.3s ease, text-shadow 0.3s ease; }
+  .demo-seq-metric.is-pending .demo-val { color: #94a3b8; font-weight: 500; }
+  .demo-seq-metric.is-live .demo-val { color: #0f172a; font-weight: 700; }
+  .demo-density-glow.is-live .demo-val {
+    color: #0e7490;
+    animation: demoDensityPulse 1.6s ease-in-out 2;
+  }
+  @keyframes demoDensityPulse {
+    0%, 100% { text-shadow: none; }
+    50% { text-shadow: 0 0 12px rgba(14, 116, 144, 0.45); }
+  }
+  .demo-crowd-block {
+    opacity: 0; transform: translateY(6px); pointer-events: none;
+    max-height: 0; overflow: hidden; margin: 0;
+    transition: opacity 0.45s ease, transform 0.45s ease, max-height 0.5s ease, margin 0.45s ease;
+  }
+  .demo-crowd-block.is-in {
+    opacity: 1; transform: none; pointer-events: auto;
+    max-height: 120px; margin-top: 0.75rem; margin-bottom: 0.25rem;
+  }
+  .demo-crowd-bar-wrap {
+    height: 10px; border-radius: 999px;
+    background: rgba(148, 163, 184, 0.25); overflow: hidden;
+  }
+  .demo-crowd-bar-fill {
+    height: 100%; width: 0%; border-radius: inherit;
+    background: linear-gradient(90deg, #2dd4bf, #0ea5e9);
+    transition: width 1.1s cubic-bezier(0.33, 0.82, 0.32, 1);
+  }
+  .demo-traj-line {
+    opacity: 0; transform: translateX(-6px);
+    font-size: 0.78rem; line-height: 1.45;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .demo-traj-line.is-in { opacity: 1; transform: none; }
+  .demo-ai-wrap { opacity: 0; max-height: 0; overflow: hidden; transition: opacity 0.5s ease, max-height 0.6s ease; }
+  .demo-ai-wrap.is-in { opacity: 1; max-height: 2000px; }
+  .demo-anomaly-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0 0.65rem; }
+  .demo-tag {
+    font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 0.35rem;
+    border: 1px solid transparent; opacity: 0; transform: scale(0.92);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .demo-tag.is-in { opacity: 1; transform: scale(1); }
+  .demo-tag--hit { background: rgba(239, 68, 68, 0.14); border-color: rgba(239, 68, 68, 0.35); color: #b91c1c; }
+  .demo-tag--idle { background: rgba(148, 163, 184, 0.15); border-color: rgba(148, 163, 184, 0.35); color: #64748b; }
+  .demo-ai-reason, .demo-ai-suggest { font-size: 0.8rem; margin-bottom: 0.35rem; }
+  .demo-ai-reason li, .demo-ai-suggest li { margin-bottom: 0.25rem; }
+  .demo-ai-grid-foot .p-2 { transition: box-shadow 0.35s ease; }
+  .demo-ai-grid-foot .p-2.is-emph {
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.35);
+  }
+  .demo-conf-hint { font-size: 0.65rem; color: #64748b; margin-top: 0.15rem; line-height: 1.35; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="demo-ld-page py-2 py-md-3">
+  <div class="demo-topbar">
+    <h1 class="h5 fw-bold mb-0 text-monitor-title">人员密度监测</h1>
+    <button type="button" class="btn btn-sm hw-btn-primary text-nowrap rounded-3" id="demoLdReplay">保存并拉取</button>
+  </div>
+
+  <article class="hw-card hw-card--tall hw-card--ld2450 border-0 shadow-sm" id="demoLdCard">
+    <div class="hw-card-head">
+      <span class="hw-card-icon" aria-hidden="true">📡</span>
+      <div class="flex-grow-1 min-w-0">
+        <h2 class="hw-card-title h6 mb-0">人员密度（HLK-LD2450）</h2>
+        <p class="hw-card-meta mb-0 small">海凌科 HLK-LD2450 毫米波雷达：原始上报与豆包 AI 安全分析（按 device_id 拉取最新一条）</p>
+      </div>
+    </div>
+    <div class="hw-ld2450-split px-1 pb-2">
+      <div class="hw-ld2450-pane">
+        <p class="small fw-semibold mb-2 hw-ld2450-pane-title">原始监测数据</p>
+        <ul class="list-unstyled small mb-0 hw-ld2450-kv">
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="people">
+            <span class="text-muted">区域人数</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="presence">
+            <span class="text-muted">存在状态</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="distance">
+            <span class="text-muted">距离</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending demo-density-glow" data-demo-m="density">
+            <span class="text-muted">密度 / 拥挤度</span><strong class="demo-val">—</strong>
+          </li>
+        </ul>
+
+        <p class="small fw-semibold mb-1 mt-2 text-muted">行为识别（录屏专用 · 每项约 2s）</p>
+        <ul class="list-unstyled small mb-0 hw-ld2450-kv">
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="chase">
+            <span class="text-muted">追逐</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="collision">
+            <span class="text-muted">碰撞</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="fall">
+            <span class="text-muted">摔倒</span><strong class="demo-val">—</strong>
+          </li>
+          <li class="d-flex justify-content-between gap-2 demo-seq-metric is-pending" data-demo-m="gather">
+            <span class="text-muted">聚众</span><strong class="demo-val">—</strong>
+          </li>
+        </ul>
+
+        <div class="demo-crowd-block" id="demoCrowdBlock" aria-live="polite">
+          <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+            <span class="small text-muted fw-semibold">拥挤度（可视化）</span>
+            <span class="small fw-bold text-info" id="demoCrowdLabel">—</span>
+          </div>
+          <div class="demo-crowd-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="demoCrowdBarWrap">
+            <div class="demo-crowd-bar-fill" id="demoCrowdBarFill"></div>
+          </div>
+          <p class="text-muted mb-0 mt-1" style="font-size:0.72rem">相对量纲示意：0.2 表示当前通行压力较低，仍须结合 AI 与现场复核。</p>
+        </div>
+
+        <div class="d-flex flex-column align-items-stretch gap-1 pt-2 border-top mt-2">
+          <span class="text-muted small">轨迹 / 运动 <span class="fw-normal" style="font-size:0.68rem">（逐条出现）</span></span>
+          <div id="demoTrajLines" class="font-monospace text-break"></div>
+          <div id="demoTrajVizWrap" class="hw-ld2450-traj-viz-wrap w-100 mt-2 d-none" aria-label="轨迹相对位置示意">
+            <div class="small text-muted mb-1 hw-ld2450-traj-viz-label">轨迹分布（卡片内相对位置，非真实比例尺）</div>
+            <div class="hw-ld2450-traj-viz rounded-3 border position-relative overflow-hidden">
+              <div class="hw-ld2450-traj-viz-inner position-relative w-100 h-100 hw-ld2450-traj-viz-inner--instant" id="demoTrajVizInner"></div>
+            </div>
+          </div>
+        </div>
+        <ul class="list-unstyled small mb-0 hw-ld2450-kv mt-2">
+          <li class="d-flex justify-content-between gap-2 border-top pt-2 demo-seq-metric is-pending" data-demo-m="time">
+            <span class="text-muted">入库时间</span><strong class="demo-val text-end small">—</strong>
+          </li>
+        </ul>
+      </div>
+
+      <div class="hw-ld2450-pane">
+        <p class="small fw-semibold mb-2 hw-ld2450-pane-title">豆包 AI 安全分析</p>
+        <div class="demo-ai-wrap" id="demoAiWrap">
+          <p class="small fw-medium mb-2 text-break" id="demoAiLead">—</p>
+          <div class="demo-anomaly-tags" id="demoAnomalyTags" aria-label="异常类型高亮"></div>
+          <p class="small fw-semibold mb-1">检测到</p>
+          <p class="small mb-2 text-break" id="demoAiDetected">—</p>
+          <p class="small fw-semibold mb-1">原因</p>
+          <ul class="demo-ai-reason ps-3 mb-2" id="demoAiReason"></ul>
+          <p class="small fw-semibold mb-1">建议</p>
+          <ul class="demo-ai-suggest ps-3 mb-2" id="demoAiSuggest"></ul>
+          <div class="d-grid gap-2 hw-ld2450-ai-grid demo-ai-grid-foot">
+            <div class="p-2 rounded-3 border bg-white" id="demoCellCrowd">
+              <div class="text-muted" style="font-size: 0.7rem">拥挤度判断</div>
+              <div class="small fw-semibold text-break" id="demoAiCrowd">—</div>
+            </div>
+            <div class="p-2 rounded-3 border bg-white" id="demoCellRisk">
+              <div class="text-muted" style="font-size: 0.7rem">风险提示</div>
+              <div class="small fw-semibold text-break text-danger" id="demoAiRisk">—</div>
+            </div>
+            <div class="p-2 rounded-3 border bg-white" id="demoCellConf">
+              <div class="text-muted" style="font-size: 0.7rem">置信度</div>
+              <div class="small fw-semibold" id="demoAiConfidence">—</div>
+              <div class="demo-conf-hint">表示模型对当前结论的综合把握：越高说明各特征越指向同一判断。</div>
+            </div>
+          </div>
+          <p class="small text-muted mb-0 mt-2"><span class="fw-semibold text-body">安全建议：</span><span id="demoAiAdvice" class="text-break">—</span></p>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const METRIC_MS = 720;
+  const BEHAVIOR_MS = 2000;
+  const TRAJ_MS = 650;
+  const AI_STAGGER = 380;
+
+  const DATA = {
+    people: "1",
+    presence: "在线",
+    distance: "849.38",
+    density: "0.2",
+    densityNum: 0.2,
+    createTime: "2026-04-20T20:34:52",
+    trajLines: [
+      "#1（目标一）运动中 · 接近主监测区",
+      "#2（目标二）暂 inactive",
+      "#3（目标三）暂 inactive",
+    ],
+    trajPoints: [
+      { x: 449, y: 721, z: 0, active: 1 },
+      { x: 0, y: 0, z: 0, active: 0 },
+      { x: 0, y: 0, z: 0, active: 0 },
+    ],
+    behavior: {
+      chase: "疑似 · 速度峰值 183 / 轨迹拉长",
+      collision: "疑似 · 多目标交叉接近",
+      fall: "关注 · 姿态突变（待复核）",
+      gather: "疑似 · 活动人数峰值 3",
+    },
+    aiLead: "综合雷达轨迹与速度特征，当前窗口内存在多项需现场复核的疑似行为。",
+    detected: "追逐疑似、碰撞疑似、摔倒关注、聚众疑似",
+    reasons: [
+      "追逐：人数峰值 3，峰值速度 183.0，轨迹异常评分偏高，与「追逐」通道结论一致。",
+      "碰撞：多目标接近或交叉较快（速度峰值 183.0；步频峰值 3773.8），与「碰撞」通道结论一致。",
+      "摔倒：出现短时姿态/加速度突变，置信中等，建议结合监控画面对照。",
+      "聚众：活动人数峰值 3、总人数峰值 3，平均速度 32.6，与「聚众」通道结论一致。",
+    ],
+    suggests: [
+      "到场排查，排除追逐 / 碰撞风险。",
+      "调阅实时监控画面对照雷达结论。",
+      "视情况安排安保或教师现场劝导与疏散。",
+      "检查设备周边是否存在强反射或干扰源。",
+      "在平台中记录处置与复盘要点。",
+    ],
+    crowdJudge: "当前密度读数 0.2（偏低），但速度 / 步频异常抬高风险，判为「低密度 · 高动态风险」。",
+    risk: "high",
+    riskLabel: "高",
+    confidence: "0.9",
+    advice: "['调阅现场监控核实人员情况', '核查逗留与跑动行为', '必要时现场介入']",
+  };
+
+  function sleep(ms) {
+    return new Promise(function (r) { setTimeout(r, ms); });
+  }
+
+  function renderTrajViz(inner, pts) {
+    if (!inner || !pts.length) return;
+    var xs = pts.map(function (p) { return p.x; });
+    var ys = pts.map(function (p) { return p.y; });
+    var minX = Math.min.apply(null, xs);
+    var maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys);
+    var maxY = Math.max.apply(null, ys);
+    if (maxX === minX) { minX -= 1; maxX += 1; }
+    if (maxY === minY) { minY -= 1; maxY += 1; }
+    var rx = maxX - minX;
+    var ry = maxY - minY;
+    var pad = 0.1;
+    inner.innerHTML = "";
+    pts.forEach(function (p, i) {
+      var dot = document.createElement("span");
+      var nx = (p.x - minX) / rx;
+      var ny = (p.y - minY) / ry;
+      var leftPct = (pad + nx * (1 - 2 * pad)) * 100;
+      var topPct = (pad + ny * (1 - 2 * pad)) * 100;
+      var act = Number(p.active);
+      var on = !isNaN(act) && act >= 0.5;
+      var slot = i % 8;
+      dot.style.left = leftPct + "%";
+      dot.style.top = topPct + "%";
+      dot.dataset.idx = String(i + 1);
+      dot.dataset.slot = String(slot);
+      dot.className = "hw-ld2450-dot" + (on ? " hw-ld2450-dot--on hw-ld2450-dot--c" + slot : " hw-ld2450-dot--off");
+      inner.appendChild(dot);
+    });
+    requestAnimationFrame(function () {
+      inner.classList.remove("hw-ld2450-traj-viz-inner--instant");
+    });
+  }
+
+  function setMetric(key, text) {
+    var row = document.querySelector('[data-demo-m="' + key + '"]');
+    if (!row) return;
+    var val = row.querySelector(".demo-val");
+    row.classList.remove("is-pending");
+    row.classList.add("is-live");
+    if (val) val.textContent = text;
+  }
+
+  function reset() {
+    document.querySelectorAll(".demo-seq-metric").forEach(function (row) {
+      row.classList.add("is-pending");
+      row.classList.remove("is-live");
+      var v = row.querySelector(".demo-val");
+      if (v) v.textContent = "—";
+    });
+    var dg = document.querySelector(".demo-density-glow");
+    if (dg) dg.classList.remove("is-live");
+    var cb = document.getElementById("demoCrowdBlock");
+    if (cb) cb.classList.remove("is-in");
+    var fill = document.getElementById("demoCrowdBarFill");
+    if (fill) fill.style.width = "0%";
+    var wrap = document.getElementById("demoCrowdBarWrap");
+    if (wrap) wrap.setAttribute("aria-valuenow", "0");
+    var cl = document.getElementById("demoCrowdLabel");
+    if (cl) cl.textContent = "—";
+    var tl = document.getElementById("demoTrajLines");
+    if (tl) tl.innerHTML = "";
+    var tv = document.getElementById("demoTrajVizWrap");
+    if (tv) tv.classList.add("d-none");
+    var inner = document.getElementById("demoTrajVizInner");
+    if (inner) {
+      inner.innerHTML = "";
+      inner.classList.add("hw-ld2450-traj-viz-inner--instant");
+    }
+    var aw = document.getElementById("demoAiWrap");
+    if (aw) aw.classList.remove("is-in");
+    document.querySelectorAll(".demo-tag").forEach(function (t) { t.classList.remove("is-in"); });
+    ["demoAiReason", "demoAiSuggest"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = "";
+    });
+    ["demoCellCrowd", "demoCellRisk", "demoCellConf"].forEach(function (id) {
+      var c = document.getElementById(id);
+      if (c) c.classList.remove("is-emph");
+    });
+    var risk = document.getElementById("demoAiRisk");
+    if (risk) { risk.textContent = "—"; risk.className = "small fw-semibold text-break"; }
+  }
+
+  async function run() {
+    reset();
+    await sleep(900);
+
+    setMetric("people", DATA.people);
+    await sleep(METRIC_MS);
+    setMetric("presence", DATA.presence);
+    await sleep(METRIC_MS);
+    setMetric("distance", DATA.distance);
+    await sleep(METRIC_MS);
+    setMetric("density", DATA.density);
+    var dg = document.querySelector(".demo-density-glow");
+    if (dg) dg.classList.add("is-live");
+    await sleep(500);
+
+    setMetric("chase", DATA.behavior.chase);
+    await sleep(BEHAVIOR_MS);
+    setMetric("collision", DATA.behavior.collision);
+    await sleep(BEHAVIOR_MS);
+    setMetric("fall", DATA.behavior.fall);
+    await sleep(BEHAVIOR_MS);
+    setMetric("gather", DATA.behavior.gather);
+    await sleep(BEHAVIOR_MS);
+
+    var crowdBlock = document.getElementById("demoCrowdBlock");
+    if (crowdBlock) crowdBlock.classList.add("is-in");
+    await sleep(200);
+    var pct = Math.min(100, Math.round(DATA.densityNum * 100));
+    var fill = document.getElementById("demoCrowdBarFill");
+    var wrap = document.getElementById("demoCrowdBarWrap");
+    var clab = document.getElementById("demoCrowdLabel");
+    if (clab) clab.textContent = "读数 " + DATA.density + " · 约 " + pct + "% 量程";
+    if (fill) fill.style.width = pct + "%";
+    if (wrap) wrap.setAttribute("aria-valuenow", String(pct));
+    await sleep(1100);
+
+    var tl = document.getElementById("demoTrajLines");
+    if (tl) {
+      DATA.trajLines.forEach(function (line, i) {
+        setTimeout(function () {
+          var div = document.createElement("div");
+          div.className = "demo-traj-line";
+          div.textContent = line;
+          tl.appendChild(div);
+          requestAnimationFrame(function () { div.classList.add("is-in"); });
+        }, i * TRAJ_MS);
+      });
+    }
+    await sleep(DATA.trajLines.length * TRAJ_MS + 400);
+
+    var tv = document.getElementById("demoTrajVizWrap");
+    var inner = document.getElementById("demoTrajVizInner");
+    if (tv && inner) {
+      tv.classList.remove("d-none");
+      renderTrajViz(inner, DATA.trajPoints);
+    }
+    await sleep(600);
+    setMetric("time", DATA.createTime);
+    await sleep(700);
+
+    var aw = document.getElementById("demoAiWrap");
+    var lead = document.getElementById("demoAiLead");
+    if (lead) lead.textContent = "（模拟分析）" + DATA.aiLead;
+    if (aw) aw.classList.add("is-in");
+    await sleep(600);
+
+    var tagBox = document.getElementById("demoAnomalyTags");
+    if (tagBox) {
+      tagBox.innerHTML = "";
+      var types = [
+        { k: "追逐", hit: true },
+        { k: "碰撞", hit: true },
+        { k: "摔倒", hit: true },
+        { k: "聚众", hit: true },
+        { k: "异常停留", hit: false },
+      ];
+      types.forEach(function (t, i) {
+        var span = document.createElement("span");
+        span.className = "demo-tag " + (t.hit ? "demo-tag--hit" : "demo-tag--idle");
+        span.textContent = t.k + (t.hit ? " · 疑似/关注" : " · 未突出");
+        tagBox.appendChild(span);
+        setTimeout(function () { span.classList.add("is-in"); }, i * AI_STAGGER);
+      });
+    }
+    await sleep(typesCount() * AI_STAGGER + 400);
+
+    var det = document.getElementById("demoAiDetected");
+    if (det) det.textContent = DATA.detected;
+    await sleep(350);
+    var rs = document.getElementById("demoAiReason");
+    if (rs) {
+      DATA.reasons.forEach(function (text) {
+        var li = document.createElement("li");
+        li.textContent = text;
+        rs.appendChild(li);
+      });
+    }
+    await sleep(450);
+    var sg = document.getElementById("demoAiSuggest");
+    if (sg) {
+      DATA.suggests.forEach(function (text) {
+        var li = document.createElement("li");
+        li.textContent = text;
+        sg.appendChild(li);
+      });
+    }
+    await sleep(500);
+
+    var crowd = document.getElementById("demoAiCrowd");
+    var risk = document.getElementById("demoAiRisk");
+    var conf = document.getElementById("demoAiConfidence");
+    var adv = document.getElementById("demoAiAdvice");
+    if (crowd) crowd.textContent = DATA.crowdJudge;
+    if (risk) {
+      risk.textContent = DATA.riskLabel;
+      risk.className = "small fw-semibold text-break text-danger";
+    }
+    if (conf) conf.textContent = DATA.confidence;
+    if (adv) adv.textContent = DATA.advice;
+    var cc = document.getElementById("demoCellCrowd");
+    if (cc) {
+      cc.classList.add("is-emph");
+      setTimeout(function () { cc.classList.remove("is-emph"); }, 2200);
+    }
+  }
+
+  function typesCount() { return 5; }
+
+  document.getElementById("demoLdReplay").addEventListener("click", function () {
+    run().catch(function () {});
+  });
+
+  setTimeout(function () {
+    run().catch(function () {});
+  }, 1000);
+})();
+</script>
+{% endblock %}

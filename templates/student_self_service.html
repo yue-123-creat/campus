@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}学生自助 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="settings-page px-1 px-md-0">
+  <h1 class="h4 fw-bold mb-2 text-stat-title">学生自助</h1>
+  <p class="text-muted small mb-4">个人基础信息、一键求助（仅学生）。心理倾诉请用侧栏「学生倾诉室」独立页面。</p>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-4">
+      <div class="card card-soft border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body">
+          <h2 class="h6 fw-bold mb-2">我的健康与位置</h2>
+          <p class="small text-muted mb-3">仅本人可见：心率/血氧 + 蓝牙/户外定位（仅展示大致位置）。</p>
+          <a class="btn btn-sm btn-outline-primary rounded-pill px-3" href="{{ url_for('student_health_location_page') }}">进入查看</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card card-soft border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body">
+          <h2 class="h6 fw-bold mb-2">个人基础信息</h2>
+          <p class="small mb-1"><span class="text-muted">账号：</span><strong id="stuMeName">—</strong></p>
+          <p class="small mb-1"><span class="text-muted">显示名：</span><strong id="stuMeDisplay">—</strong></p>
+          <p class="small mb-0"><span class="text-muted">角色：</span><strong id="stuMeRole">—</strong></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-4">
+      <div class="card card-soft border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body">
+          <h2 class="h6 fw-bold mb-2">一键求助</h2>
+          <select id="stuHelpReason" class="form-select form-select-sm mb-2">
+            <option value="身体不适">身体不适</option>
+            <option value="冲突事件">冲突事件</option>
+            <option value="迷路求助">迷路求助</option>
+            <option value="其它">其它</option>
+          </select>
+          <textarea id="stuHelpDetail" class="form-control form-control-sm mb-2" rows="3" placeholder="可选：补充说明"></textarea>
+          <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="stuHelpBtn">提交求助</button>
+          <div id="stuHelpMsg" class="small text-muted mt-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  async function api(url, opts) {
+    const r = await fetch(url, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...(opts || {}) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.message || "请求失败");
+    return d;
+  }
+  function setText(id, v) {
+    const n = document.getElementById(id);
+    if (n) n.textContent = v == null || v === "" ? "—" : String(v);
+  }
+  api("/api/me/profile").then((d) => {
+    const x = d.data || {};
+    setText("stuMeName", x.username);
+    setText("stuMeDisplay", x.display_name);
+    setText("stuMeRole", x.role_label || x.role);
+  }).catch(() => {});
+
+  document.getElementById("stuHelpBtn")?.addEventListener("click", async () => {
+    const reason = document.getElementById("stuHelpReason")?.value || "";
+    const detail = document.getElementById("stuHelpDetail")?.value || "";
+    const msg = document.getElementById("stuHelpMsg");
+    try {
+      const d = await api("/api/student/help", { method: "POST", body: JSON.stringify({ reason, detail }) });
+      if (msg) msg.textContent = d.message || "已提交";
+    } catch (e) {
+      if (msg) msg.textContent = e.message || "提交失败";
+    }
+  });
+
+})();
+</script>
+{% endblock %}

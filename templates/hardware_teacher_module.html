@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ teacher_focus_label }} · 硬件监测详情{% endblock %}
+
+{% block head_extra %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+  <a href="{{ url_for('hardware_dashboard') }}" class="btn btn-sm btn-outline-secondary rounded-pill">← 返回硬件监测主页</a>
+  <span class="small text-muted">当前模块：{{ teacher_focus_label }}</span>
+</div>
+
+{% include 'partials/hardware_dashboard.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.TEACHER_FOCUS_MODULE = "{{ teacher_focus_module }}";
+  document.addEventListener("DOMContentLoaded", () => {
+    const keepByModule = {
+      temp_hum: ["cardTempHum", "chartTempHum"],
+      smoke: ["cardSmoke", "chartSmoke"],
+      infrared: ["cardIr", "textIr"],
+      heart: ["cardHeart", "chartHeart", "chartSpo2"],
+    };
+    const keep = keepByModule[window.TEACHER_FOCUS_MODULE] || [];
+    if (!keep.length) return;
+
+    const cols = document.querySelectorAll(".hw-cards-row > [class*='col-']");
+    if (!cols.length) return;
+
+    let keptCount = 0;
+    cols.forEach((col) => {
+      const ids = Array.from(col.querySelectorAll("[id]")).map((x) => x.id);
+      const hit = keep.some((id) => ids.includes(id));
+      if (!hit) col.classList.add("d-none");
+      else keptCount += 1;
+    });
+
+    if (keptCount === 0) {
+      cols.forEach((col) => col.classList.remove("d-none"));
+      return;
+    }
+
+    cols.forEach((col) => {
+      if (col.classList.contains("d-none")) return;
+      col.className = col.className
+        .replace(/\bcol-(sm|md|lg|xl|xxl)-\d+\b/g, "")
+        .replace(/\bcol-\d+\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      col.classList.add("col-12");
+    });
+  });
+</script>
+<script src="{{ url_for('static', filename='js/hardware-dashboard.js') }}"></script>
+{% endblock %}
+

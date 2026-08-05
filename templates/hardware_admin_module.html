@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ admin_focus_label }} · 硬件监测详情{% endblock %}
+{% block head_extra %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+  {% if hw_mode == 'history' %}
+  <a href="{{ url_for('history_page') }}" class="btn btn-sm btn-outline-secondary rounded-pill">← 返回历史数据主页</a>
+  {% else %}
+  <a href="{{ url_for('hardware_dashboard') }}" class="btn btn-sm btn-outline-secondary rounded-pill">← 返回硬件监测主页</a>
+  {% endif %}
+  <span class="small text-muted">当前模块：{{ admin_focus_label }}</span>
+</div>
+
+{% include 'partials/hardware_dashboard.html' %}
+{% endblock %}
+{% block scripts %}
+<script>
+  window.ADMIN_FOCUS_MODULE = "{{ admin_focus_module }}";
+  document.addEventListener("DOMContentLoaded", () => {
+    const keepByModule = {
+      temp_hum: ["cardTempHum", "chartTempHum"],
+      smoke: ["cardSmoke", "chartSmoke"],
+      infrared: ["cardIr", "textIr"],
+      crowd: ["cardCrowdLd2450", "chartCrowdHeat"],
+      camera: ["cardCamAi", "hwCamPreview"],
+      voice: ["cardVoice", "hwVoiceText", "hwVoiceAbnormalText"],
+      wearable: ["chartHeart", "chartSpo2", "cardBleLocation", "cardGpsLocation"],
+    };
+    const keep = keepByModule[window.ADMIN_FOCUS_MODULE] || [];
+    if (!keep.length) return;
+
+    const cols = document.querySelectorAll(".hw-cards-row > [class*='col-']");
+    if (!cols.length) return;
+
+    let keptCount = 0;
+    cols.forEach((col) => {
+      const ids = Array.from(col.querySelectorAll("[id]")).map((x) => x.id);
+      const hit = keep.some((id) => ids.includes(id));
+      if (!hit) col.classList.add("d-none");
+      else keptCount += 1;
+    });
+
+    // 安全兜底：若未匹配到任何模块，回退展示全部，避免页面空白
+    if (keptCount === 0) {
+      cols.forEach((col) => col.classList.remove("d-none"));
+      return;
+    }
+
+    // 详情页排版优化：仅显示当前模块时，铺满整行，避免右侧留白
+    cols.forEach((col) => {
+      if (col.classList.contains("d-none")) return;
+      col.className = col.className
+        .replace(/\bcol-(sm|md|lg|xl|xxl)-\d+\b/g, "")
+        .replace(/\bcol-\d+\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      col.classList.add("col-12");
+    });
+  });
+</script>
+<script src="{{ url_for('static', filename='js/hardware-dashboard.js') }}"></script>
+{% endblock %}

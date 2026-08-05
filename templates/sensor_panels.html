@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}统一传感器面板 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="row g-3">
+    <div class="col-12 col-xl-4">
+      <article class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2 text-info">环境监测（DHT11）</h5>
+          <div class="d-flex gap-3 mb-2">
+            <div>温度 <span id="envTemp" class="fw-bold fs-4 text-primary">—</span> ℃</div>
+            <div>湿度 <span id="envHumi" class="fw-bold fs-4 text-primary">—</span> %</div>
+          </div>
+          <div id="chartEnv" style="height:260px;"></div>
+          <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle">
+              <thead><tr><th>时间</th><th>温度</th><th>湿度</th></tr></thead>
+              <tbody id="tbEnv"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <article class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2 text-info">安防监测（HC-SR501）</h5>
+          <div class="mb-2">人体状态：<span id="secHuman" class="fw-bold fs-4 text-primary">—</span></div>
+          <div id="chartSec" style="height:260px;"></div>
+          <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle">
+              <thead><tr><th>时间</th><th>人体检测</th></tr></thead>
+              <tbody id="tbSec"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <article class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-2 text-info">健康心率（MAX30102）</h5>
+          <div class="d-flex gap-3 mb-2">
+            <div>心率 <span id="hlHr" class="fw-bold fs-4 text-primary">—</span> bpm</div>
+            <div>血氧 <span id="hlSpo2" class="fw-bold fs-4 text-primary">—</span> %</div>
+          </div>
+          <div id="chartHealth" style="height:260px;"></div>
+          <div class="table-responsive mt-2">
+            <table class="table table-sm align-middle">
+              <thead><tr><th>时间</th><th>心率</th><th>血氧</th></tr></thead>
+              <tbody id="tbHealth"></tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/sensor-panels.js') }}"></script>
+{% endblock %}
+

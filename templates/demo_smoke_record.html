@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% block title %}烟雾检测 · 录屏{% endblock %}
+{% block head_extra %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/hardware.css') }}" rel="stylesheet">
+<style>
+  .demo-th-page.demo-th-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .demo-th-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .demo-th-kpi .hw-kpi-value {
+    transition: color 0.35s ease, text-shadow 0.35s ease;
+  }
+  .demo-th-kpi.is-pending .hw-kpi-value {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  .demo-th-kpi.is-live .hw-kpi-value {
+    color: var(--hw-text, #1a3a3a);
+    font-weight: 800;
+  }
+  .demo-th-kpi.is-live.temp-pop .hw-kpi-value {
+    animation: demoThKpiPopSmoke 1.2s ease-out 1;
+  }
+  @keyframes demoThKpiPopSmoke {
+    0%, 100% { text-shadow: none; }
+    40% { text-shadow: 0 0 14px rgba(244, 162, 97, 0.4); }
+  }
+  #demoSmokeChart {
+    opacity: 0;
+    transition: opacity 0.45s ease;
+  }
+  #demoSmokeChart.is-in {
+    opacity: 1;
+  }
+  .demo-smoke-ai-wrap {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.45s ease, max-height 0.55s ease;
+  }
+  .demo-smoke-ai-wrap.is-in {
+    opacity: 1;
+    max-height: 480px;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="hw-page demo-th-page demo-th-wrap py-2 py-md-3">
+  <div class="demo-th-topbar">
+    <h1 class="h5 fw-bold mb-0 text-monitor-title">烟雾检测</h1>
+    <button type="button" class="btn btn-sm hw-btn-primary text-nowrap rounded-3" id="demoSmokeReplay">刷新</button>
+  </div>
+  <div class="row g-3">
+    <div class="col-12">
+      <article class="hw-card hw-card--wide monitor-card border-0 shadow-sm" id="demoCardSmoke">
+        <div class="hw-card-head">
+          <span class="hw-card-icon" aria-hidden="true">💨</span>
+          <div>
+            <h4 class="hw-card-title">烟雾</h4>
+            <p class="hw-card-meta mb-0" id="demoMetaSmoke">—</p>
+          </div>
+        </div>
+        <div class="hw-kpi-row">
+          <div class="hw-kpi demo-th-kpi is-pending" id="demoKpiSmokePpm">
+            <span class="hw-kpi-label">浓度</span>
+            <span class="hw-kpi-value" id="demoValSmokePpm">—</span>
+            <span class="hw-kpi-unit">ppm</span>
+          </div>
+          <div class="hw-kpi demo-th-kpi is-pending" id="demoKpiSmokeState">
+            <span class="hw-kpi-label">状态</span>
+            <span class="hw-kpi-value" id="demoValSmokeState">—</span>
+            <span class="hw-kpi-unit" aria-hidden="true">&nbsp;</span>
+          </div>
+        </div>
+        <div class="hw-chart" id="demoSmokeChart" role="img" aria-label="烟雾浓度趋势"></div>
+        <div class="demo-smoke-ai-wrap mt-2 pt-3 border-top" id="demoSmokeAiWrap" aria-live="polite">
+          <div class="d-flex align-items-start gap-2 mb-2">
+            <span class="hw-card-icon" aria-hidden="true" style="font-size: 1.25rem;">🤖</span>
+            <div>
+              <h4 class="h6 fw-bold mb-1">AI 分析</h4>
+              <p class="small text-muted mb-2" id="demoSmokeAiLead">—</p>
+              <ul class="small mb-0 ps-3" id="demoSmokeAiList"></ul>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const METRIC_MS = 560;
+  const CHART_DELAY_MS = 420;
+  const AI_AFTER_CHART_MS = 480;
+  const COL = {
+    orange: "#f4a261",
+    green: "#22c55e",
+    red: "#e63946",
+    text: "#5c7a7a",
+    split: "#e0f2f0",
+  };
+
+  const isAdminRole = String((document.body && document.body.dataset && document.body.dataset.role) || "").toLowerCase() === "admin";
+  const isTeacherRole = String((document.body && document.body.dataset && document.body.dataset.role) || "").toLowerCase() === "teacher";
+
+  /** 相邻采样约 2.5 分钟（在「两三分钟」量级）；异常段时间轴紧接在正常段结束之后 */
+  const STEP_MS = Math.round(2.5 * 60 * 1000);
+  const N_POINTS = 23;
+
+  const BASE = {
+    location: "教学楼A-东门",
+    thresholdWarn: 80,
+    thresholdAlarm: 200,
+  };
+
+  const ABNORMAL_PPMS = [
+    12.0, 14.2, 16.8, 19.1, 22.4, 25.0, 28.6, 32.1, 35.8, 39.2, 43.5, 48.0, 52.4, 57.1, 61.8,
+    65.2, 69.5, 73.1, 76.8, 80.2, 83.6, 86.0, 88.3,
+  ];
+
+  const AI_NORMAL = {
+    aiLead: "当前时段烟雾浓度处于常态区间，序列未呈现持续性冲高，与环境基线一致。",
+    aiBullets: [
+      "维持例行巡检与传感器零点校准周期即可",
+      "若相邻区域有施工或消杀，可关注短时尖峰是否为孤立事件",
+    ],
+  };
+
+  const AI_ABNORMAL = {
+    aiLead: "检测到浓度已越过预警阈值并呈上升趋势，综合判断为需要现场复核的环境异常窗口。",
+    aiBullets: [
+      "优先排查电气设备过热、明火与易燃挥发物等典型来源",
+      "通知属地安保 / 后勤到场核查；必要时记录取证并联动应急预案",
+      "持续观察曲线是否继续冲高；若逼近报警阈值应升级处置强度",
+    ],
+  };
+
+  function roundMinute(d) {
+    var x = new Date(d.getTime());
+    x.setSeconds(0, 0);
+    return x;
+  }
+
+  function fmtMetaUpdate(d) {
+    return d.toLocaleString("zh-CN", { hour12: false });
+  }
+
+  function fmtChartAxis(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    var h = String(d.getHours()).padStart(2, "0");
+    var min = String(d.getMinutes()).padStart(2, "0");
+    return m + "-" + day + " " + h + ":" + min;
+  }
+
+  function buildData(isAbnormal) {
+    var normalEnd = roundMinute(new Date());
+    var N = N_POINTS;
+    var series;
+    var updatedLabel;
+    var ppm;
+
+    if (!isAbnormal) {
+      series = [];
+      for (var i = 0; i < N; i++) {
+        var di = new Date(normalEnd.getTime() - (N - 1 - i) * STEP_MS);
+        var v = 22 + Math.sin(i / 3.2) * 4 + (i % 4) * 0.35;
+        series.push({ t: di.toISOString(), ppm: Math.round(v * 10) / 10 });
+      }
+      updatedLabel = fmtMetaUpdate(normalEnd);
+      ppm = series[N - 1].ppm;
+      return Object.assign({}, BASE, AI_NORMAL, {
+        series: series,
+        updatedLabel: updatedLabel,
+        ppm: ppm,
+        smoke_alarm: false,
+        smoke_level: "normal",
+      });
+    }
+
+    var abnormalStart = new Date(normalEnd.getTime() + STEP_MS);
+    series = [];
+    for (var j = 0; j < N; j++) {
+      var dj = new Date(abnormalStart.getTime() + j * STEP_MS);
+      series.push({ t: dj.toISOString(), ppm: ABNORMAL_PPMS[j] });
+    }
+    var abnormalEnd = new Date(abnormalStart.getTime() + (N - 1) * STEP_MS);
+    updatedLabel = fmtMetaUpdate(abnormalEnd);
+    ppm = ABNORMAL_PPMS[N - 1];
+    return Object.assign({}, BASE, AI_ABNORMAL, {
+      series: series,
+      updatedLabel: updatedLabel,
+      ppm: ppm,
+      smoke_alarm: true,
+      smoke_level: "warn",
+    });
+  }
+
+  let DATA = {};
+  let chart = null;
+  let refreshClickCount = 0;
+
+  function sleep(ms) {
+    return new Promise(function (r) {
+      setTimeout(r, ms);
+    });
+  }
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function smokeStatusLabel() {
+    if (!DATA.smoke_alarm) return "正常";
+    if (DATA.smoke_level === "alarm") return "报警";
+    return "预警";
+  }
+
+  function applySmokeCardVisual(card) {
+    if (!card) return;
+    card.classList.remove("hw-card--flash", "card-high-risk", "card-medium-risk", "card-low-risk", "low-risk", "medium-risk", "high-risk");
+    card.classList.toggle("hw-card--alarm", !!DATA.smoke_alarm);
+    if (!DATA.smoke_alarm) return;
+    card.classList.add("hw-card--flash");
+    if (isAdminRole) {
+      if (DATA.smoke_level === "alarm") card.classList.add("card-high-risk");
+      else card.classList.add("card-medium-risk");
+    }
+    if (isTeacherRole) {
+      if (DATA.smoke_level === "alarm") card.classList.add("high-risk");
+      else card.classList.add("medium-risk");
+    }
+  }
+
+  function setStateValueStyle(span) {
+    if (!span) return;
+    span.classList.remove("text-success", "text-warning", "text-danger");
+    if (!DATA.smoke_alarm) span.classList.add("text-success");
+    else if (DATA.smoke_level === "alarm") span.classList.add("text-danger");
+    else span.classList.add("text-warning");
+  }
+
+  function resetUiBeforeRun() {
+    var meta = el("demoMetaSmoke");
+    if (meta) meta.textContent = "—";
+    ["demoKpiSmokePpm", "demoKpiSmokeState"].forEach(function (id) {
+      var k = el(id);
+      if (!k) return;
+      k.classList.add("is-pending");
+      k.classList.remove("is-live", "temp-pop");
+    });
+    var vp = el("demoValSmokePpm");
+    var vs = el("demoValSmokeState");
+    if (vp) vp.textContent = "—";
+    if (vs) {
+      vs.textContent = "—";
+      vs.classList.remove("text-success", "text-warning", "text-danger");
+    }
+    var kppm = el("demoKpiSmokePpm");
+    if (kppm) kppm.classList.remove("is-anomaly");
+    var card = el("demoCardSmoke");
+    if (card) {
+      card.classList.remove("hw-card--flash", "card-high-risk", "card-medium-risk", "card-low-risk", "low-risk", "medium-risk", "high-risk", "hw-card--alarm");
+    }
+    var chEl = el("demoSmokeChart");
+    if (chEl) chEl.classList.remove("is-in");
+    var ai = el("demoSmokeAiWrap");
+    if (ai) {
+      ai.classList.remove("is-in");
+      ai.style.removeProperty("max-height");
+    }
+    var lead = el("demoSmokeAiLead");
+    var list = el("demoSmokeAiList");
+    if (lead) lead.textContent = "—";
+    if (list) list.innerHTML = "";
+    if (chart) {
+      chart.dispose();
+      chart = null;
+    }
+  }
+
+  function chartLineColor() {
+    if (!DATA.smoke_alarm) return COL.green;
+    if (DATA.smoke_level === "alarm") return COL.red;
+    return COL.orange;
+  }
+
+  function renderChart() {
+    var rows = DATA.series || [];
+    var times = rows.map(function (r) {
+      return r.t;
+    });
+    var ppms = rows.map(function (r) {
+      return r.ppm;
+    });
+    var lineColor = chartLineColor();
+    var cEl = el("demoSmokeChart");
+    if (!cEl || typeof echarts === "undefined") return;
+    chart = echarts.init(cEl);
+    chart.setOption({
+      color: [lineColor],
+      animationDuration: 1100,
+      animationEasing: "cubicOut",
+      tooltip: { trigger: "axis" },
+      legend: { data: ["浓度ppm"], textStyle: { color: COL.text } },
+      grid: { left: "3%", right: "4%", bottom: "3%", top: "18%", containLabel: true },
+      xAxis: {
+        type: "category",
+        data: times.map(function (t) {
+          return fmtChartAxis(t);
+        }),
+        axisLabel: { color: COL.text, fontSize: 10 },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: "value",
+        name: "ppm",
+        axisLabel: { color: COL.text },
+        splitLine: { lineStyle: { color: COL.split } },
+      },
+      series: [
+        {
+          name: "浓度ppm",
+          type: "line",
+          smooth: true,
+          data: ppms,
+          lineStyle: { width: 3, color: lineColor },
+          symbol: "circle",
+          symbolSize: 6,
+          areaStyle: { opacity: DATA.smoke_alarm ? 0.12 : 0.08, color: lineColor },
+        },
+      ],
+    });
+    requestAnimationFrame(function () {
+      if (cEl) cEl.classList.add("is-in");
+    });
+  }
+
+  function showAiPanel() {
+    var wrap = el("demoSmokeAiWrap");
+    var lead = el("demoSmokeAiLead");
+    var list = el("demoSmokeAiList");
+    if (!wrap || !lead || !list) return;
+    lead.textContent = DATA.aiLead || "—";
+    list.innerHTML = "";
+    (DATA.aiBullets || []).forEach(function (text) {
+      var li = document.createElement("li");
+      li.textContent = text;
+      li.className = "mb-1";
+      list.appendChild(li);
+    });
+    requestAnimationFrame(function () {
+      wrap.classList.add("is-in");
+    });
+  }
+
+  async function run(isAbnormal) {
+    DATA = buildData(!!isAbnormal);
+    resetUiBeforeRun();
+    await sleep(280);
+    var meta = el("demoMetaSmoke");
+    if (meta) {
+      meta.textContent =
+        "阈值参考 预警≥" +
+        DATA.thresholdWarn +
+        "ppm 报警≥" +
+        DATA.thresholdAlarm +
+        "ppm · " +
+        DATA.location +
+        " · 更新：" +
+        DATA.updatedLabel;
+    }
+    await sleep(METRIC_MS);
+    var vp = el("demoValSmokePpm");
+    var kppm = el("demoKpiSmokePpm");
+    if (vp) vp.textContent = Number(DATA.ppm).toFixed(1);
+    if (kppm) {
+      kppm.classList.remove("is-pending");
+      kppm.classList.add("is-live", "temp-pop");
+    }
+    await sleep(METRIC_MS);
+    var vstate = el("demoValSmokeState");
+    var kstate = el("demoKpiSmokeState");
+    if (vstate) {
+      vstate.textContent = smokeStatusLabel();
+      setStateValueStyle(vstate);
+    }
+    if (kstate) {
+      kstate.classList.remove("is-pending");
+      kstate.classList.add("is-live");
+    }
+    var card = el("demoCardSmoke");
+    applySmokeCardVisual(card);
+    if (kppm) {
+      kppm.classList.toggle("is-anomaly", !!DATA.smoke_alarm);
+    }
+    await sleep(CHART_DELAY_MS);
+    renderChart();
+    await sleep(AI_AFTER_CHART_MS);
+    showAiPanel();
+  }
+
+  function scheduleRunFromButton() {
+    refreshClickCount += 1;
+    var isAbnormal = refreshClickCount % 2 === 0;
+    run(isAbnormal).catch(function () {});
+  }
+
+  var btn = el("demoSmokeReplay");
+  if (btn) btn.addEventListener("click", scheduleRunFromButton);
+
+  window.addEventListener("resize", function () {
+    if (chart) chart.resize();
+  });
+
+  setTimeout(function () {
+    refreshClickCount = 0;
+    run(false).catch(function () {});
+  }, 600);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}健康日志 · 校园安全智能监测平台{% endblock %}
+
+{% block content %}
+<div class="px-1 px-md-0" id="healthLogsPage" data-api-history="/api/health/history" data-api-latest="/api/health/latest">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+    <div>
+      <h1 class="h4 fw-bold mb-1 text-stat-title">健康日志（全量记录）</h1>
+      <p class="small text-muted mb-0">包括所有单次/非连续的 AI 结果与原始数据。前台预警仅显示“连续 5 次异常”。</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+      <a class="btn btn-sm btn-outline-primary rounded-pill px-3" href="{{ url_for('health_page') }}">返回前台预警</a>
+      <div class="input-group input-group-sm" style="max-width: 220px;">
+        <span class="input-group-text">用户ID</span>
+        <input class="form-control" id="healthUserId" placeholder="留空=全部" />
+      </div>
+      <button class="btn btn-sm btn-primary rounded-pill px-3" id="btnHealthRefresh">刷新</button>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body">
+          <h2 class="h6 fw-bold mb-1">最新一条</h2>
+          <p class="small text-muted mb-0" id="healthUpdatedAt">—</p>
+          <div class="d-flex gap-3 mt-2">
+            <div>心率 <span class="fw-bold fs-4 text-primary" id="valHr">—</span></div>
+            <div>血氧 <span class="fw-bold fs-4 text-primary" id="valSpo2">—</span></div>
+          </div>
+          <div class="mt-2 small text-muted">风险等级：<strong id="textRisk">—</strong></div>
+          <div class="mt-2 p-3 rounded-4 border bg-white small" id="textAlert">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-2">
+            <div>
+              <h2 class="h6 fw-bold mb-1">近 24 小时趋势</h2>
+              <p class="small text-muted mb-0">心率 + 血氧 双折线。</p>
+            </div>
+            <div class="small text-muted" id="healthStats">均值：— · 最高：— · 最低：— · 异常：—</div>
+          </div>
+          <div id="chartHealth24h" style="height:360px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-2">
+            <div>
+              <h2 class="h6 fw-bold mb-1">历史记录</h2>
+              <p class="small text-muted mb-0">最近 200 条。</p>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="toggleInvalid" checked>
+              <label class="form-check-label small text-muted" for="toggleInvalid">过滤无效读数（HR≤0 或 SpO₂≤0）</label>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>用户ID</th>
+                  <th>心率</th>
+                  <th>血氧</th>
+                  <th>风险</th>
+                  <th>预警文本</th>
+                </tr>
+              </thead>
+              <tbody id="tbHealth"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/health-logs.js') }}"></script>
+{% endblock %}
+

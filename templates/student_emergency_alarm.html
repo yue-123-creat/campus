@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}一键紧急报警 · 学生端{% endblock %}
+
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">一键紧急报警</h1>
+    <p class="text-muted small mb-0">用于危险/突发意外场景。点击后将同步上传你当前的蓝牙区域与 GPS 点位（如有），并推送给安保与管理员。</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-body p-4">
+        <h2 class="h6 fw-bold mb-3">快速报警</h2>
+        <div class="mb-3">
+          <label class="form-label small text-muted mb-1" for="studentAlarmMessage">补充说明（可选）</label>
+          <textarea id="studentAlarmMessage" class="form-control" rows="3" maxlength="500" placeholder="例如：被尾随/摔倒受伤/遭遇冲突，需要帮助…"></textarea>
+          <div class="small text-muted mt-1">不需要填写坐标；系统会自动附带当前定位信息。</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button type="button" id="studentAlarmBtn" class="btn btn-danger px-4">一键紧急报警</button>
+          <span id="studentAlarmHint" class="small text-muted">未发送</span>
+        </div>
+        <div class="alert alert-warning small mt-3 mb-0">
+          请勿恶意触发。紧急报警将进入处置流程并记录审计。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card card-soft border-0 shadow-sm h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2 class="h6 fw-bold mb-0">我的报警记录</h2>
+          <button type="button" id="studentAlarmRefresh" class="btn btn-sm btn-outline-primary">刷新</button>
+        </div>
+        <div class="table-responsive rounded-3 border bg-white">
+          <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">时间</th>
+                <th>蓝牙区域</th>
+                <th>GPS</th>
+                <th class="pe-3">说明</th>
+              </tr>
+            </thead>
+            <tbody id="studentAlarmRows">
+              <tr><td colspan="4" class="text-center text-muted py-4">加载中…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="small text-muted mt-2">仅你本人可见此列表。</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/student-emergency.js') }}"></script>
+{% endblock %}
+

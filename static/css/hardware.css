@@ -1,0 +1,608 @@
+/**
+ * 硬件数据可视化页 — 青色卡通风 / 清爽科技风（适配浅色主内容区）
+ */
+
+.hw-page {
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hw-cyan: #00b8c4;
+  --hw-cyan-bright: #00d4d8;
+  --hw-cyan-dim: rgba(0, 168, 150, 0.12);
+  --hw-danger: #e63946;
+  --hw-warn: #f4a261;
+  --hw-text: #1a3a3a;
+  --hw-muted: #5c7a7a;
+  --hw-card-bg: linear-gradient(145deg, #ffffff 0%, #f0fdfb 100%);
+  --hw-border: rgba(0, 168, 150, 0.28);
+  --hw-radius: 1.25rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+  color: var(--hw-text);
+}
+
+/* 教师硬件页：与教师首页统一的浅蓝低饱和渲染 */
+.hw-page.hw-teacher-theme {
+  --hw-cyan: #5b9bd5;
+  --hw-cyan-bright: #7eb2e1;
+  --hw-cyan-dim: rgba(91, 155, 213, 0.12);
+  --hw-text: #2e4c68;
+  --hw-muted: #64809a;
+  --hw-card-bg: linear-gradient(160deg, #f7fbff 0%, #edf4fb 100%);
+  --hw-border: rgba(116, 160, 214, 0.3);
+  background: #f0f8ff;
+  border: 1px solid rgba(116, 160, 214, 0.22);
+  border-radius: 1rem;
+  padding: 0.9rem;
+}
+
+.hw-page.hw-teacher-theme .hw-title {
+  background: linear-gradient(90deg, #4f8dca, #3f7fbe);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hw-page.hw-teacher-theme .hw-section-title {
+  color: #3f7fbe;
+}
+
+.hw-page.hw-teacher-theme .hw-badge {
+  color: #3f7fbe;
+  border-color: rgba(116, 160, 214, 0.35);
+  background: rgba(91, 155, 213, 0.1);
+}
+
+.hw-page.hw-teacher-theme .hw-kpi-unit {
+  color: #4f8dca;
+}
+
+.hw-page.hw-teacher-theme .hw-status--ok {
+  background: rgba(91, 155, 213, 0.12);
+  color: #3f7fbe;
+}
+
+.hw-page.hw-teacher-theme .hw-btn-primary,
+.hw-page.hw-teacher-theme .btn-outline-primary {
+  background: linear-gradient(135deg, #5b9bd5, #4f8dca) !important;
+  border-color: #4f8dca !important;
+  color: #fff !important;
+}
+
+.hw-page.hw-teacher-theme .btn-outline-primary:hover,
+.hw-page.hw-teacher-theme .btn-outline-primary:focus {
+  background: linear-gradient(135deg, #4f8dca, #3f7fbe) !important;
+  border-color: #3f7fbe !important;
+  color: #fff !important;
+}
+
+/* 安保人员密度页：与系统概览暖橘主题一致 */
+.hw-page.hw-security-theme {
+  --hw-cyan: #f4a261;
+  --hw-cyan-bright: #e98b3b;
+  --hw-cyan-dim: rgba(244, 162, 97, 0.14);
+  --hw-text: #7a4a2a;
+  --hw-muted: #9a6a45;
+  --hw-card-bg: linear-gradient(160deg, #fff9ef 0%, #fff2df 100%);
+  --hw-border: rgba(233, 139, 59, 0.28);
+  background: #fff7ea;
+  border: 1px solid rgba(233, 139, 59, 0.2);
+  border-radius: 1rem;
+  padding: 0.9rem;
+}
+
+.hw-page.hw-security-theme .hw-title {
+  background: linear-gradient(90deg, #d97706, #b45309);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hw-page.hw-security-theme .hw-section-title {
+  color: #b45309;
+}
+
+.hw-page.hw-security-theme .hw-badge {
+  color: #b45309;
+  border-color: rgba(233, 139, 59, 0.35);
+  background: rgba(244, 162, 97, 0.12);
+}
+
+.hw-page.hw-security-theme .hw-kpi-unit {
+  color: #d97706;
+}
+
+.hw-page.hw-security-theme .hw-status--ok {
+  background: rgba(244, 162, 97, 0.14);
+  color: #b45309;
+}
+
+.hw-page.hw-security-theme .hw-btn-primary,
+.hw-page.hw-security-theme .btn-outline-primary {
+  background: linear-gradient(135deg, #f4a261, #e98b3b) !important;
+  border-color: #e98b3b !important;
+  color: #fff !important;
+}
+
+.hw-page.hw-security-theme .btn-outline-primary:hover,
+.hw-page.hw-security-theme .btn-outline-primary:focus {
+  background: linear-gradient(135deg, #e98b3b, #d97706) !important;
+  border-color: #d97706 !important;
+  color: #fff !important;
+}
+
+/* 安保人员密度页：两张核心卡缩小，避免占比过大 */
+.hw-page.hw-security-theme #cardCrowdLd2450 {
+  min-height: 240px;
+}
+
+.hw-page.hw-security-theme #chartCrowdHeat {
+  height: 220px !important;
+  min-height: 220px !important;
+}
+
+.hw-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--hw-card-bg);
+  border: 1px solid var(--hw-border);
+  border-radius: var(--hw-radius);
+  box-shadow: 0 8px 28px rgba(0, 100, 90, 0.08);
+}
+
+.hw-title {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #00a896, #00796b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hw-sub {
+  font-size: 0.9rem;
+  color: var(--hw-muted) !important;
+}
+
+.hw-toolbar .hw-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--hw-muted);
+}
+
+.hw-select,
+.hw-input {
+  min-width: 8rem;
+  background: #fff !important;
+  border: 1px solid var(--hw-border) !important;
+  color: var(--hw-text) !important;
+  border-radius: 0.75rem !important;
+}
+
+.hw-btn-primary {
+  background: linear-gradient(135deg, #00c9b7, #00a896) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: 999px !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+.hw-badge {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--hw-cyan-dim);
+  border: 1px solid var(--hw-border);
+  color: #00796b;
+}
+
+.hw-divider {
+  width: 1px;
+  height: 1.5rem;
+  background: var(--hw-border);
+}
+
+.hw-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #00796b;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* 卡片 */
+.hw-card {
+  position: relative;
+  height: 100%;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--hw-radius);
+  background: var(--hw-card-bg);
+  border: 2px solid rgba(0, 168, 150, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 80, 70, 0.06);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 仅管理员硬件页：异常卡片底部渐变灯光（不影响点击与排版） */
+body[data-role="admin"] .hw-page .hw-card {
+  overflow: hidden;
+  isolation: isolate;
+}
+
+body[data-role="admin"] .hw-page .hw-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+body[data-role="admin"] .hw-page .hw-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 15%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+  z-index: 0;
+}
+
+/* 高危异常卡片 - 红色光晕 */
+body[data-role="admin"] .hw-page .hw-card.card-high-risk::after {
+  opacity: 1;
+  background: linear-gradient(to top, rgba(255, 77, 79, 0.68) 0%, rgba(255, 77, 79, 0) 100%);
+}
+
+/* 中等异常卡片 - 橙色光晕 */
+body[data-role="admin"] .hw-page .hw-card.card-medium-risk::after {
+  opacity: 1;
+  background: linear-gradient(to top, rgba(250, 140, 22, 0.66) 0%, rgba(250, 140, 22, 0) 100%);
+}
+
+/* 低危异常卡片 - 黄色光晕 */
+body[data-role="admin"] .hw-page .hw-card.card-low-risk::after {
+  opacity: 1;
+  background: linear-gradient(to top, rgba(250, 173, 20, 0.64) 0%, rgba(250, 173, 20, 0) 100%);
+}
+
+/* 历史数据页（hw_mode=history）：不展示异常光晕，避免“旧数据”误强调 */
+body[data-role="admin"] .hw-page[data-default-mode="history"] .hw-card::after {
+  opacity: 0 !important;
+ }
+
+/* 教师硬件页：按风险等级渲染底部渐变光晕（仅教师账号） */
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.low-risk::after,
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.medium-risk::after,
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.high-risk::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 25%;
+  pointer-events: none;
+}
+
+/* 低危：黄色渐变光晕 */
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.low-risk::after {
+  background: linear-gradient(to top, rgba(250, 173, 20, 0.6) 0%, rgba(250, 173, 20, 0) 100%);
+}
+
+/* 中危：橙色渐变光晕 */
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.medium-risk::after {
+  background: linear-gradient(to top, rgba(250, 140, 22, 0.6) 0%, rgba(250, 140, 22, 0) 100%);
+}
+
+/* 高危：红色渐变光晕 */
+body[data-role="teacher"] .hw-page.hw-teacher-theme .monitor-card.high-risk::after {
+  background: linear-gradient(to top, rgba(255, 77, 79, 0.6) 0%, rgba(255, 77, 79, 0) 100%);
+}
+
+.hw-card:hover {
+  border-color: var(--hw-border);
+  box-shadow: 0 8px 32px rgba(0, 168, 150, 0.1);
+}
+
+.hw-card--wide .hw-chart {
+  height: 220px;
+}
+
+.hw-card--alarm.hw-card--flash {
+  animation: hw-alarm-pulse 1s ease-in-out infinite;
+}
+
+@keyframes hw-alarm-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.25);
+    border-color: rgba(230, 57, 70, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px rgba(230, 57, 70, 0.2);
+    border-color: rgba(230, 57, 70, 0.85);
+  }
+}
+
+.hw-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.hw-card-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 100, 90, 0.15));
+}
+
+.hw-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--hw-text);
+}
+
+.hw-card-meta {
+  font-size: 0.75rem;
+  color: var(--hw-muted);
+}
+
+.hw-kpi-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.hw-kpi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+}
+
+.hw-kpi--center {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.hw-kpi-label {
+  width: 100%;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hw-muted);
+}
+
+.hw-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0d4a44;
+  font-variant-numeric: tabular-nums;
+}
+
+.hw-kpi-value--lg {
+  font-size: 2rem;
+}
+
+.hw-kpi-unit {
+  font-size: 0.85rem;
+  color: var(--hw-cyan);
+  font-weight: 600;
+}
+
+.hw-kpi.is-anomaly .hw-kpi-value,
+.hw-kpi.is-anomaly .hw-kpi-unit {
+  color: var(--hw-danger) !important;
+}
+
+.hw-status {
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.75rem;
+}
+
+.hw-status--ok {
+  background: rgba(0, 168, 150, 0.15);
+  color: #00796b;
+}
+
+.hw-status--warn {
+  background: rgba(244, 162, 97, 0.2);
+  color: #c26e1a;
+}
+
+.hw-status--alarm {
+  background: rgba(230, 57, 70, 0.18);
+  color: var(--hw-danger);
+  animation: hw-blink 0.8s linear infinite;
+}
+
+@keyframes hw-blink {
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.hw-chart {
+  width: 100%;
+  min-height: 140px;
+}
+
+.hw-chart--sm {
+  height: 120px;
+}
+
+.hw-chart--heart {
+  height: 200px;
+}
+
+.hw-chart--ring {
+  height: 260px;
+}
+
+.hw-chart--heat {
+  height: 200px;
+}
+
+.hw-card--tall {
+  min-height: 280px;
+}
+
+.hw-partner-hint {
+  border-left: 3px solid var(--hw-cyan-bright);
+  padding-left: 0.75rem;
+}
+
+.hw-ir-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--hw-cyan-dim);
+  border: 2px dashed var(--hw-border);
+}
+
+.hw-ir-state {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #00796b;
+}
+
+.hw-ir-body.is-present .hw-ir-icon-wrap {
+  background: rgba(0, 168, 150, 0.22);
+  border-style: solid;
+}
+
+.hw-ir-body.is-absent .hw-ir-state {
+  color: var(--hw-muted);
+}
+
+.hw-extensions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.hw-ext-item {
+  padding: 0.85rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px dashed var(--hw-border);
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.hw-ext-item:hover {
+  transform: translateY(-2px);
+  border-style: solid;
+}
+
+.hw-ext-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--hw-text);
+  margin: 0;
+}
+
+.hw-ext-hint {
+  font-size: 0.65rem;
+  color: var(--hw-muted);
+  margin: 0.25rem 0 0;
+}
+
+.hw-ext-badge {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--hw-cyan-dim);
+  color: #00796b;
+}
+
+.hw-modal {
+  background: linear-gradient(160deg, #f8fffe 0%, #e8faf8 100%);
+  border: 1px solid var(--hw-border);
+  color: var(--hw-text);
+}
+
+@media (max-width: 991px) {
+  .hw-hero {
+    flex-direction: column;
+  }
+
+  .hw-toolbar {
+    width: 100%;
+  }
+
+  .hw-card--wide .hw-chart {
+    height: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hw-kpi-value--lg {
+    font-size: 1.65rem;
+  }
+
+  .hw-input {
+    min-width: 100%;
+  }
+}
+
+/* —— 硬件监测 · 语音识别卡片：左右等宽两栏（仅 #cardVoice，不影响其它模块）—— */
+#cardVoice .hw-voice-split {
+  margin-top: 0.15rem;
+}
+
+#cardVoice .hw-voice-col {
+  border-color: var(--hw-border) !important;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 250, 0.88) 100%);
+}
+
+#cardVoice .hw-voice-col--abnormal-wrap {
+  min-height: 5.5rem;
+}
+
+@media (min-width: 768px) {
+  #cardVoice .hw-voice-col--abnormal-wrap {
+    min-height: 0;
+  }
+}
+
+#cardVoice .hw-voice-col-title--normal {
+  color: #0a6b78;
+  letter-spacing: 0.02em;
+}
+
+#cardVoice .hw-voice-col-title--abnormal {
+  color: #b45309;
+  letter-spacing: 0.02em;
+}
+
+#cardVoice .hw-voice-history li {
+  padding: 0.22rem 0;
+  border-bottom: 1px dashed rgba(0, 168, 150, 0.16);
+  line-height: 1.35;
+}
+
+#cardVoice .hw-voice-history li:last-child {
+  border-bottom: 0;
+}

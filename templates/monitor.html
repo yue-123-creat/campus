@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="monitor-page-head mb-3 mb-md-4">
+  <h1 class="h4 fw-bold text-monitor-title mb-1">监控画面</h1>
+  <p class="text-muted small mb-0">多路实时预览与 AI 研判联动事件与短信推送</p>
+</div>
+
+<div class="monitor-page-layout">
+  <div class="monitor-video-stack">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2 mb-3">
+      <div class="d-grid gap-2 d-sm-inline-flex monitor-layout-btns">
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-3 app-touch-btn" data-cam-layout="1">单路</button>
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-3 app-touch-btn" data-cam-layout="2">双路</button>
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-3 app-touch-btn" data-cam-layout="4">四路</button>
+      </div>
+    </div>
+
+    <div id="camera-empty" class="card card-soft border-0 shadow-sm d-none">
+      <div class="card-body p-5 text-center text-muted">
+        <p class="mb-2">尚未配置摄像头视频源</p>
+        <p class="small mb-0">请通过环境变量 <code class="text-primary">CAMERA_STREAM_URLS</code> 设置取流地址（逗号分隔，最多 4 个）。可选 <code class="text-primary">CAMERA_LABELS</code> 设置画面名称。</p>
+      </div>
+    </div>
+
+    <div id="camera-grid" class="cam-grid cam-grid-2" aria-live="polite"></div>
+
+    <p class="text-muted small mt-3 mb-0 monitor-foot-hint">若无法显示画面，请检查混合内容拦截或 <code class="text-primary">CAMERA_DISPLAY_MODES</code> 与流格式是否匹配。</p>
+  </div>
+
+  <aside class="monitor-ai-stack" aria-label="AI 智能分析">
+    <div class="card card-soft border-0 shadow-sm monitor-ai-card h-100">
+      <div class="card-header monitor-ai-card-header border-0">
+        <span class="fw-semibold">AI 智能分析</span>
+        <span class="badge rounded-pill bg-white text-primary bg-opacity-25 ms-1">实时 + 手动</span>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <p class="text-muted small mb-3">定时结合当前画面研判；异常时自动写入「事件记录」并触发 <strong class="text-primary">短信 Webhook</strong>（配置环境变量 <code class="text-primary">SMS_WEBHOOK_URL</code>）。</p>
+        <div class="d-grid gap-2 mb-3">
+          <button type="button" class="btn btn-primary rounded-3 app-touch-btn" id="monitorAiManualBtn" onclick="manualAnalyzeMonitor()">
+            AI 分析当前画面
+          </button>
+        </div>
+        <p class="text-muted small mb-2 fw-semibold">最近研判</p>
+        <div id="monitor-ai-feed" class="monitor-ai-feed flex-grow-1"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+{% block vendor_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+{% endblock %}
+{% block scripts %}
+<script>window.PAGE_TYPE = "monitor";</script>
+{% endblock %}

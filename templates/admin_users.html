@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}用户与权限 · 校园安全智能监测平台{% endblock %}
+{% block head_extra %}
+<script>window.PAGE_TYPE = "admin_users";</script>
+{% endblock %}
+{% block content %}
+<div class="admin-page-head mb-3 mb-md-4">
+  <h1 class="h4 fw-bold text-events-title mb-1">用户与权限</h1>
+  <p class="text-muted small mb-0">管理员 / 教师 / 学生角色；模块与区域白名单（JSON 数组，["*"] 表示全部）</p>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-3 p-md-4">
+    <h2 class="h6 fw-semibold mb-3">新建用户</h2>
+    <div class="row g-2">
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">用户名</label>
+        <input id="u-new-name" class="form-control rounded-3" autocomplete="off">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">密码</label>
+        <input id="u-new-pwd" type="password" class="form-control rounded-3" autocomplete="new-password">
+      </div>
+      <div class="col-12 col-md-2">
+        <label class="form-label small text-muted mb-1">角色</label>
+        <select id="u-new-role" class="form-select rounded-3">
+          <option value="teacher">教师</option>
+          <option value="student">学生</option>
+          <option value="security">安保</option>
+          <option value="admin">管理员</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <label class="form-label small text-muted mb-1">显示名</label>
+        <input id="u-new-disp" class="form-control rounded-3" placeholder="可选">
+      </div>
+      <div class="col-12 col-md-2 d-grid align-items-end">
+        <button type="button" class="btn btn-primary rounded-3" id="u-btn-create">创建</button>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label small text-muted mb-1">可访问模块 JSON</label>
+        <input id="u-new-mods" class="form-control rounded-3 font-monospace small" value='["*"]' title='例: ["home","events"]'>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label small text-muted mb-1">可访问区域 JSON</label>
+        <input id="u-new-zones" class="form-control rounded-3 font-monospace small" value='["*"]' title='例: ["教学楼","宿舍"]'>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm overflow-hidden">
+  <div class="card-header border-0 bg-transparent fw-semibold text-stat-title">用户列表</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 admin-table">
+      <thead class="table-light">
+        <tr>
+          <th class="ps-3">ID</th>
+          <th>用户名</th>
+          <th>显示名</th>
+          <th>角色</th>
+          <th>模块权限</th>
+          <th>区域权限</th>
+          <th class="text-end pe-3">操作</th>
+        </tr>
+      </thead>
+      <tbody id="admin-users-tbody"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

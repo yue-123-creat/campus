@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}学生倾诉室 · 校园安全智能监测平台{% endblock %}
+
+{% block head_extra %}
+<style>
+  .vent-wrap { max-width: 720px; margin: 0 auto; }
+  .vent-hero {
+    background: linear-gradient(135deg, #f4faf7 0%, #eef6fb 100%);
+    border-radius: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid rgba(46, 125, 50, 0.12);
+  }
+  .vent-textarea {
+    min-height: 140px;
+    resize: vertical;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(0,0,0,.08);
+    background: #fff;
+  }
+  .vent-ai-box {
+    background: #fff;
+    border-radius: 0.75rem;
+    border: 1px dashed rgba(46, 125, 50, 0.25);
+    padding: 1rem;
+    min-height: 4rem;
+  }
+  .vent-history-item {
+    border-left: 3px solid rgba(46, 125, 50, 0.35);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .vent-muted { color: #5c6c75; font-size: 0.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vent-wrap px-2 px-md-0 pb-4">
+  <div class="vent-hero mb-4">
+    <h1 class="h5 fw-bold mb-1" style="color:#1b4332;">学生倾诉室</h1>
+    <p class="vent-muted mb-0">这里只保留倾诉、记录与 AI 安抚。若检测到强烈消极风险，系统会向管理员发出预警以便及时关怀。</p>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label fw-semibold small" for="ventInput">写下烦恼或心事</label>
+    <textarea id="ventInput" class="form-control vent-textarea" maxlength="4000" placeholder="可以慢慢写，不必工整。"></textarea>
+    <div class="d-flex align-items-center gap-2 mt-2">
+      <button type="button" class="btn btn-success rounded-pill px-4" id="ventSubmitBtn">发送并获得安抚</button>
+      <span class="small text-muted" id="ventStatus"></span>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <h2 class="h6 fw-bold mb-2" style="color:#1b4332;">AI 安抚回复</h2>
+    <div id="ventAiReply" class="vent-ai-box text-secondary small">提交后，这里会显示陪伴与疏导话语。</div>
+    <div class="vent-muted mt-1" id="ventMeta"></div>
+  </div>
+
+  <div>
+    <h2 class="h6 fw-bold mb-2" style="color:#1b4332;">我的倾诉记录</h2>
+    <div id="ventHistory" class="small"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const input = document.getElementById("ventInput");
+  const btn = document.getElementById("ventSubmitBtn");
+  const statusEl = document.getElementById("ventStatus");
+  const aiBox = document.getElementById("ventAiReply");
+  const metaEl = document.getElementById("ventMeta");
+  const histEl = document.getElementById("ventHistory");
+
+  async function api(url, opts) {
+    const r = await fetch(url, { credentials: "same-origin", headers: { "Content-Type": "application/json", Accept: "application/json" }, ...(opts || {}) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.message || "请求失败");
+    return d;
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  async function loadHistory() {
+    try {
+      const d = await api("/api/student/vent-room/history?limit=20");
+      const items = Array.isArray(d.items) ? d.items : [];
+      if (!items.length) {
+        histEl.innerHTML = '<p class="text-muted small mb-0">暂无记录。</p>';
+        return;
+      }
+      histEl.innerHTML = items.map(function (it) {
+        const t = esc(it.created_at || "");
+        const rl = esc(it.risk_level || "");
+        const c = esc(it.content_text || "");
+        const a = esc(it.ai_reply || "");
+        const badge = rl === "high" ? '<span class="badge bg-danger ms-1">高风险</span>' : (rl === "moderate" ? '<span class="badge bg-warning text-dark ms-1">关注</span>' : "");
+        return (
+          '<div class="vent-history-item">' +
+          '<div class="vent-muted mb-1">' + t + badge + "</div>" +
+          '<div class="mb-1"><strong>我：</strong>' + c + "</div>" +
+          '<div class="text-secondary"><strong>陪伴：</strong>' + a + "</div>" +
+          "</div>"
+        );
+      }).join("");
+    } catch (e) {
+      histEl.innerHTML = '<p class="text-danger small">' + esc(e.message || "加载失败") + "</p>";
+    }
+  }
+
+  btn.addEventListener("click", async function () {
+    const content = (input && input.value) ? input.value.trim() : "";
+    statusEl.textContent = "";
+    if (!content) {
+      statusEl.textContent = "请先写一些内容";
+      return;
+    }
+    btn.disabled = true;
+    statusEl.textContent = "正在生成回复…";
+    try {
+      const d = await api("/api/student/vent-room/submit", { method: "POST", body: JSON.stringify({ content }) });
+      const x = d.data || {};
+      aiBox.textContent = x.ai_reply || "（暂无回复）";
+      var meta = "情绪：" + (x.sentiment || "—") + " · 评估：" + (x.risk_level || "—");
+      if (x.source) meta += " · 来源：" + x.source;
+      if (x.admin_notified) meta += " · 已同步心理风险预警至管理员";
+      metaEl.textContent = meta;
+      input.value = "";
+      statusEl.textContent = "已保存";
+      await loadHistory();
+    } catch (e) {
+      statusEl.textContent = e.message || "提交失败";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadHistory();
+})();
+</script>
+{% endblock %}

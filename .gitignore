@@ -1,0 +1,67 @@
+# —— 密钥与本地环境 ——
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# —— 数据库与业务数据 ——
+data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+backups/
+archive/
+dump/
+*.sql.gz
+
+# —— 用户上传与媒体 ——
+static/uploads/
+uploads/
+media/
+
+# —— Python ——
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# —— IDE / 系统 ——
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# —— 日志与临时文件 ——
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# —— 本地硬件/串口调试产物 ——
+*.pcap
+serial_capture/
+
+# —— 迁移本地状态（保留 versions）——
+# migrations/versions/__pycache__/

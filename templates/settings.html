@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}{% if current_role == 'security' %}告警管理 - 系统设置 · 校园安全智能监测平台{% else %}系统设置 · 校园安全智能监测平台{% endif %}{% endblock %}
+
+{% block content %}
+<div class="settings-page px-1 px-md-0">
+  {% if current_role == 'security' %}
+  <h1 class="h4 fw-bold mb-2 text-stat-title">告警管理 - 系统设置</h1>
+  <p class="text-muted small mb-4">安保端告警处置与人员密度监测相关入口（风格与系统概览一致）。</p>
+  {% else %}
+  <h1 class="h4 fw-bold mb-2 text-stat-title">系统设置</h1>
+  <p class="text-muted small mb-4">快捷入口：监控、统计、知识库及角色功能入口（与左侧主导航精简版配合使用）。</p>
+  {% endif %}
+
+  <div class="row g-3">
+    {% if current_role in ['teacher', 'security', 'admin'] %}
+    <div class="col-12 col-md-6 col-lg-4">
+      {% if current_role in ['security', 'admin'] %}
+      <a href="{{ url_for('monitor') }}" class="text-decoration-none">
+      {% else %}
+      <a href="{{ url_for('hardware_dashboard') }}" class="text-decoration-none">
+      {% endif %}
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile">
+          <div class="card-body">
+            {% if current_role in ['security', 'admin'] %}
+            <h2 class="h6 fw-bold text-dark mb-1">监控画面</h2>
+            <p class="small text-muted mb-0">多路实时预览与 AI 研判</p>
+            {% else %}
+            <h2 class="h6 fw-bold text-dark mb-1">硬件监测</h2>
+            <p class="small text-muted mb-0">硬件采样与实时态势</p>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    {% if current_role in ['teacher', 'security', 'admin'] %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('statistics_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">统计分析</h2>
+            <p class="small text-muted mb-0">图表、趋势与区域分布</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('knowledge_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">知识库</h2>
+            <p class="small text-muted mb-0">安全知识检索与问答</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    {% if current_role == 'student' %}
+    {% set stu_mods = (session.get('user') or {}).get('allowed_modules') or ['*'] %}
+    {% if stu_mods is not iterable or stu_mods is string %}
+    {% set stu_mods = ['*'] %}
+    {% endif %}
+    {% if '*' in stu_mods or 'vent_room' in stu_mods %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('student_vent_room_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-success border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">学生倾诉室</h2>
+            <p class="small text-muted mb-0">倾诉、AI 安抚、心理风险预警（权限含 vent_room 或 *）</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('student_self_service_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-info border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">学生自助</h2>
+            <p class="small text-muted mb-0">个人信息 / 一键求助</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if current_role == 'security' %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('events_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-warning border-opacity-50">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">告警管理</h2>
+            <p class="small text-muted mb-0">事件筛选、处置跟进、导出记录</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('admin_devices_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-warning border-opacity-50">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">设备状态与告警控制</h2>
+            <p class="small text-muted mb-0">查看设备在线状态、下发声光报警指令</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if current_role == 'admin' %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('history_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-primary border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">硬件监测 - 历史数据</h2>
+            <p class="small text-muted mb-0">趋势回溯与区间查询</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+
+    {% if current_role == 'admin' %}
+    <div class="col-12 mt-2"><p class="small text-uppercase text-muted fw-semibold mb-2">管理员</p></div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('admin_devices_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-primary border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">设备管理</h2>
+            <p class="small text-muted mb-0">设备注册与远程指令</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('admin_users_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-primary border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">用户与权限</h2>
+            <p class="small text-muted mb-0">账号与模块访问控制</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('admin_alerts_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-primary border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">告警规则</h2>
+            <p class="small text-muted mb-0">阈值与通知策略</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('admin_audit_page') }}" class="text-decoration-none">
+        <div class="card card-soft border-0 shadow-sm h-100 rounded-4 settings-tile border-primary border-opacity-25">
+          <div class="card-body">
+            <h2 class="h6 fw-bold text-dark mb-1">审计日志</h2>
+            <p class="small text-muted mb-0">操作留痕</p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

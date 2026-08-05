@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="home-page-root {% if current_role == 'teacher' %}teacher-home-theme{% elif current_role == 'security' %}security-home-theme{% endif %}">
+{% if current_role == 'teacher' %}
+<div class="card card-soft border-0 shadow-sm mb-3 teacher-alert-card">
+  <div class="card-header home-pc-aside-head border-0 d-flex justify-content-between align-items-center">
+    <span>异常预警提醒（粗略位置）</span>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="teacher-alert-refresh">刷新提醒</button>
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="teacher-alert-mark-all">全部已查看</button>
+    </div>
+  </div>
+  <div class="card-body p-3">
+    <div class="row g-2 mb-3" id="teacher-report-summary">
+      <div class="col-6 col-md-3"><div class="rounded-3 border bg-white p-2 small">总上报：<strong id="teacher-report-total">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="rounded-3 border bg-white p-2 small">待处理：<strong id="teacher-report-pending">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="rounded-3 border bg-white p-2 small">处理中：<strong id="teacher-report-processing">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="rounded-3 border bg-white p-2 small">已完成：<strong id="teacher-report-done">0</strong></div></div>
+    </div>
+    <div id="teacher-alert-list" class="small text-muted mb-3">正在加载提醒…</div>
+    <div class="d-flex justify-content-end mb-3">
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="teacher-report-toggle">查看我的上报记录</button>
+    </div>
+    <div id="teacher-report-list-wrap" class="d-none">
+      <div class="table-responsive rounded-3 border bg-white mb-3">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-2">时间</th>
+              <th>片区</th>
+              <th>异常行为</th>
+              <th class="pe-2">状态</th>
+            </tr>
+          </thead>
+          <tbody id="teacher-report-list"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="border-top pt-3">
+      <h3 class="h6 fw-semibold mb-2 text-home-alerts-title">一键联动上报（管理员 + 安保）</h3>
+      <div class="row g-2">
+        <div class="col-12 col-md-4">
+          <input id="teacher-escalate-area" class="form-control form-control-sm" placeholder="大致片区，如：教学楼后侧" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input id="teacher-escalate-place" class="form-control form-control-sm" placeholder="地点提示，如：楼梯间死角" />
+        </div>
+        <div class="col-12 col-md-4">
+          <input id="teacher-escalate-behavior" class="form-control form-control-sm" placeholder="异常行为，如：多人异常逗留" />
+        </div>
+        <div class="col-12">
+          <textarea id="teacher-escalate-message" class="form-control form-control-sm" rows="2" placeholder="补充说明（仅文字描述，不填坐标/轨迹）"></textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <span id="teacher-escalate-hint" class="small text-muted">仅支持粗略地点描述，禁止填写精准坐标或轨迹。</span>
+          <button type="button" class="btn btn-sm btn-primary rounded-3" id="teacher-escalate-submit">上报联动</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if current_role == 'security' %}
+<div class="card card-soft border-0 shadow-sm mb-3 teacher-alert-card">
+  <div class="card-header home-pc-aside-head border-0 d-flex justify-content-between align-items-center">
+    <span>异常预警提醒（安保联动）</span>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="security-alert-refresh">刷新提醒</button>
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="security-alert-mark-all">全部已查看</button>
+    </div>
+  </div>
+  <div class="card-body p-3">
+    <div id="security-alert-list" class="small text-muted">正在加载安保提醒…</div>
+  </div>
+</div>
+{% endif %}
+<div class="row g-4 mb-2 home-stat-row home-pc-stat-row">
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100 home-hero-card">
+      <div class="card-body p-4 p-lg-4">
+        <p class="text-muted small mb-2 fw-medium">当前综合风险</p>
+        <p id="overall-risk-text" class="display-4 fw-bold mb-2 lh-1">—</p>
+        <p id="overall-risk-hint" class="text-muted small mb-0">根据未关闭告警综合判定</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100 home-stat-card">
+      <div class="card-body p-4 p-lg-4">
+        <p class="text-muted small mb-2 fw-medium">事件总数</p>
+        <p class="display-4 fw-bold text-dark mb-0 lh-1" id="summary-total">0</p>
+        <p class="text-muted small mt-3 mb-0">含历史已归档</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="card card-soft border-0 shadow-sm h-100 home-stat-card">
+      <div class="card-body p-4 p-lg-4">
+        <p class="text-muted small mb-2 fw-medium">待处理告警</p>
+        <p class="display-4 fw-bold text-dark mb-0 lh-1" id="summary-open">0</p>
+        <p class="text-muted small mt-3 mb-0">需跟进处置</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if current_role == 'admin' %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-header home-pc-aside-head border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>管理员指令接收（收件箱）</span>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="admin-inbox-refresh">刷新</button>
+      <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="admin-inbox-mark-all">全部已查看</button>
+    </div>
+  </div>
+  <div class="card-body p-3">
+    <div id="admin-inbox-list" class="small text-muted">正在加载收件箱…</div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-header home-pc-aside-head border-0">
+    管理员账号指令响应（事件一键上报）
+  </div>
+  <div class="card-body p-3">
+    <div class="row g-2">
+      <div class="col-12 col-md-4">
+        <input id="admin-escalate-area" class="form-control form-control-sm" placeholder="大致片区，如：操场西侧" />
+      </div>
+      <div class="col-12 col-md-4">
+        <input id="admin-escalate-place" class="form-control form-control-sm" placeholder="地点提示，如：围墙旁" />
+      </div>
+      <div class="col-12 col-md-4">
+        <input id="admin-escalate-behavior" class="form-control form-control-sm" placeholder="异常行为，如：禁区闯入" />
+      </div>
+      <div class="col-12">
+        <textarea id="admin-escalate-message" class="form-control form-control-sm" rows="2" placeholder="补充说明（仅文字描述）"></textarea>
+      </div>
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <span id="admin-escalate-hint" class="small text-muted">上报将进入处置流，可在「管理员工作台」统一分派与跟进。</span>
+        <button type="button" class="btn btn-sm btn-primary rounded-3" id="admin-escalate-submit">一键上报</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="admin-cockpit-root" class="admin-cockpit card card-soft border-0 shadow-sm mb-4 overflow-hidden">
+  <div class="card-header border-0 bg-transparent py-3 px-3 px-md-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <h2 class="h5 fw-bold text-stat-title mb-1">管理员数据驾驶舱</h2>
+      <p class="text-muted small mb-0">核心指标与图表约每 1 秒刷新；监控画面约 5 秒轮播一路</p>
+    </div>
+    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary small">ECharts · 实时</span>
+  </div>
+  <div class="card-body pt-0 px-3 px-md-4 pb-4">
+    <div id="cockpit-loading" class="cockpit-loading text-center text-muted small py-2 d-none">同步数据中…</div>
+    <div id="cockpit-error" class="alert alert-warning small d-none py-2 mb-3"></div>
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-lg-3">
+        <div class="cockpit-kpi card border-0 h-100 rounded-4 shadow-sm">
+          <div class="card-body p-3">
+            <p class="text-muted small mb-1">今日告警</p>
+            <p class="h3 mb-0 fw-bold text-dark" id="cockpit-kpi-alerts">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="cockpit-kpi card border-0 h-100 rounded-4 shadow-sm">
+          <div class="card-body p-3">
+            <p class="text-muted small mb-1">在线设备</p>
+            <p class="h3 mb-0 fw-bold text-dark" id="cockpit-kpi-online">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="cockpit-kpi card border-0 h-100 rounded-4 shadow-sm">
+          <div class="card-body p-3">
+            <p class="text-muted small mb-1">综合风险</p>
+            <p class="display-6 fw-bold mb-0 lh-1 cockpit-kpi-val text-success" id="cockpit-kpi-risk">—</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="cockpit-kpi card border-0 h-100 rounded-4 shadow-sm">
+          <div class="card-body p-3">
+            <p class="text-muted small mb-1">告警处理率</p>
+            <p class="h3 mb-0 fw-bold text-dark" id="cockpit-kpi-handle">—</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-xl-5">
+        <div class="card border-0 rounded-4 shadow-sm h-100">
+          <div class="card-body p-2">
+            <div id="cockpit-chart-map" class="cockpit-chart"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-xl-4">
+        <div class="card border-0 rounded-4 shadow-sm h-100">
+          <div class="card-body p-2">
+            <div id="cockpit-chart-type" class="cockpit-chart"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-xl-3">
+        <div class="card border-0 rounded-4 shadow-sm h-100">
+          <div class="card-body p-2 d-flex flex-column">
+            <p class="small fw-semibold text-stat-title mb-2 px-1">监控轮播</p>
+            <div id="cockpit-cam-wrap" class="cockpit-cam-wrap flex-grow-1 rounded-3 overflow-hidden position-relative" role="button" title="点击放大">
+              <div id="cockpit-cam-host" class="cockpit-cam-host"></div>
+              <span id="cockpit-cam-caption" class="cockpit-cam-cap small"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row g-3">
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 rounded-4 shadow-sm h-100">
+          <div class="card-body p-2">
+            <div id="cockpit-chart-online" class="cockpit-chart cockpit-chart-tall"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 rounded-4 shadow-sm h-100">
+          <div class="card-body p-2">
+            <div id="cockpit-chart-trend" class="cockpit-chart cockpit-chart-tall"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="cockpitCamModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0">
+        <h3 class="modal-title h6 fw-bold" id="cockpit-cam-modal-title">监控画面</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+      </div>
+      <div class="modal-body pt-0" id="cockpit-cam-modal-body"></div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="home-pc-split-wrap">
+  <div class="home-pc-split">
+    <div class="home-pc-split-main">
+      {% if current_role in ['security', 'admin'] %}
+      <div class="home-alerts-section mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 home-alerts-toolbar">
+          <div>
+            <h2 class="h5 fw-semibold mb-1 text-home-alerts-title">最新告警</h2>
+            <p class="text-muted small mb-0">按时间倒序，最多展示 10 条</p>
+          </div>
+          <a href="{{ url_for('events_page') }}" class="btn btn-outline-primary rounded-pill px-4 app-touch-btn home-pc-btn-wide">查看全部</a>
+        </div>
+
+        <div id="home-alerts-panel" class="card card-soft border-0 shadow-sm d-none">
+          <div class="table-responsive home-alerts-table-wrap">
+            <table class="table home-alerts-table home-alerts-rwd table-hover align-middle mb-0">
+              <thead class="home-alerts-thead">
+                <tr>
+                  <th class="th-risk">风险等级</th>
+                  <th class="th-type">事件类型</th>
+                  <th class="th-loc">地点</th>
+                  <th class="th-time">时间</th>
+                  <th class="th-ai text-center text-md-end pe-md-3">AI 解释</th>
+                </tr>
+              </thead>
+              <tbody id="latest-alerts"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <p id="latest-empty" class="text-muted mb-0 py-5 text-center rounded-4 border bg-white d-none home-alerts-empty">暂无告警，系统运行平稳</p>
+      </div>
+      {% else %}
+      <div class="card card-soft border-0 shadow-sm mb-4">
+        <div class="card-body py-4 text-muted small">
+          当前角色不展示预警事件列表。请通过“系统设置”进入你有权限的模块。
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="home-pc-split-aside u-pc1024-block" aria-label="大屏数据概览">
+      {% if current_role not in ['teacher', 'student'] %}
+      <div class="card card-soft border-0 shadow-sm mb-3 home-pc-aside-card">
+        <div class="card-header home-pc-aside-head border-0">事件类型分布</div>
+        <div class="card-body p-2 pb-3">
+          <div id="home-pc-chart-type" class="home-pc-mini-chart"></div>
+        </div>
+      </div>
+      {% endif %}
+      <div class="card card-soft border-0 shadow-sm home-pc-aside-card">
+        <div class="card-header home-pc-aside-head border-0">TOP5 风险区域</div>
+        <div class="card-body py-3">
+          <ol id="home-heat-top5" class="home-heat-top5-list mb-0 ps-3 small text-muted"></ol>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="home-pc-bottom-bar u-pc1024-block card card-soft border-0 shadow-sm mt-3">
+    <div class="card-body py-3 px-3 px-md-4">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3 home-pc-quick-links">
+        <span class="fw-semibold text-home-alerts-title me-1 me-md-2">快捷入口</span>
+        {% if current_role in ['security', 'admin'] %}
+        <a href="{{ url_for('events_page') }}" class="btn btn-outline-primary rounded-3 home-pc-quick-btn">全部告警</a>
+        {% endif %}
+        {% if current_role in ['teacher', 'security', 'admin'] %}
+        <a href="{{ url_for('hardware_dashboard') }}" class="btn btn-outline-primary rounded-3 home-pc-quick-btn">{% if current_role == 'security' %}人员密度监测{% else %}硬件监测{% endif %}</a>
+        {% endif %}
+        {% if current_role in ['teacher', 'admin'] %}
+        <a href="{{ url_for('statistics_page') }}" class="btn btn-outline-primary rounded-3 home-pc-quick-btn">统计分析</a>
+        {% endif %}
+        <a href="{{ url_for('knowledge_page') }}" class="btn btn-outline-primary rounded-3 home-pc-quick-btn">知识库</a>
+        {% if current_role in ['security', 'admin'] %}
+        <a href="{{ url_for('monitor') }}" class="btn btn-outline-primary rounded-3 home-pc-quick-btn">监控画面</a>
+        {% endif %}
+      </div>
+      <div class="border-top border-opacity-50 pt-3 home-pc-notice">
+        <h3 class="h6 fw-semibold mb-2 text-stat-title">最新安全公告</h3>
+        <p class="small text-muted mb-1">请各岗位值班人员保持平台在线，发现高风险告警须按预案联动处置并留存记录。</p>
+        <p class="small text-muted mb-0">本周开展消防疏散演练，具体时间以保卫处通知为准；知识库已更新「实验室安全」条目，欢迎查阅。</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+{% block vendor_scripts %}
+<!-- HLS：驾驶舱监控轮播；ECharts 已由 base.html 全局加载 -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+{% endblock %}
+{% block scripts %}
+<script>window.PAGE_TYPE = "home";</script>
+{% if current_role == 'admin' %}
+<script src="{{ url_for('static', filename='js/cockpit.js') }}"></script>
+{% endif %}
+{% endblock %}

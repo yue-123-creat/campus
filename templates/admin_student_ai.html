@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+{% block title %}学生AI研判 · 仅管理员{% endblock %}
+
+{% block content %}
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-4">
+    <h1 class="h4 fw-bold text-stat-title mb-2">学生手环AI研判（仅管理员可用）</h1>
+    <p class="text-muted small mb-0">优先聚焦三类高危：心率异常、手环摘除/离线、盲区滞留。盲区协同联动仅可由管理员触发与查看。</p>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-3 d-flex flex-wrap gap-2 align-items-center">
+    <button type="button" class="btn btn-sm btn-primary" id="aiRiskScanBtn">执行研判扫描</button>
+    <button type="button" class="btn btn-sm btn-outline-primary" id="aiRiskRefreshBtn">刷新列表</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="aiCfgToggleBtn">阈值配置</button>
+    <span class="small text-muted" id="aiRiskHint">待命</span>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3 d-none" id="aiCfgCard">
+  <div class="card-body p-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">心率下限</label>
+        <input id="cfgHrMin" class="form-control form-control-sm" value="60">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">心率上限</label>
+        <input id="cfgHrMax" class="form-control form-control-sm" value="100">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">血氧下限</label>
+        <input id="cfgSpo2Min" class="form-control form-control-sm" value="95">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">BLE离线(分)</label>
+        <input id="cfgBleStale" class="form-control form-control-sm" value="10">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">GPS离线(分)</label>
+        <input id="cfgGpsStale" class="form-control form-control-sm" value="15">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">心率失联(分)</label>
+        <input id="cfgHeartStale" class="form-control form-control-sm" value="20">
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label small text-muted mb-1">盲区关键词（逗号分隔）</label>
+        <input id="cfgBlindKw" class="form-control form-control-sm" value="角落,绿化带,隐蔽,隔间,死角,偏僻,楼道,后侧,围墙旁,盲区">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">盲区滞留(分)</label>
+        <input id="cfgBlindLinger" class="form-control form-control-sm" value="12">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">去重窗口(分)</label>
+        <input id="cfgDedupe" class="form-control form-control-sm" value="15">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">多设备时间窗(分)</label>
+        <input id="cfgMultiWin" class="form-control form-control-sm" value="6">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">佐证最少数量</label>
+        <input id="cfgMultiMin" class="form-control form-control-sm" value="2">
+      </div>
+      <div class="col-12 col-md-2 d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary w-100" id="aiCfgSaveBtn">保存配置</button>
+      </div>
+      <div class="col-12">
+        <div class="small text-muted" id="aiCfgHint">仅管理员可见；修改后建议执行一次“研判扫描”。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm mb-3">
+  <div class="card-body p-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">状态</label>
+        <select id="fltStatus" class="form-select form-select-sm">
+          <option value="">全部</option>
+          <option value="open">open</option>
+          <option value="investigating">investigating</option>
+          <option value="resolved">resolved</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">类型</label>
+        <select id="fltType" class="form-select form-select-sm">
+          <option value="">全部</option>
+          <option value="heart_abnormal">心率异常</option>
+          <option value="wearable_health_ai">手环健康AI研判</option>
+          <option value="band_removed_or_offline">手环摘除/离线</option>
+          <option value="blindspot_linger">盲区滞留</option>
+          <option value="blindspot_multisensor">盲区+多设备佐证</option>
+          <option value="band_offline_multisensor">离线/摘除+多设备佐证</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">学生关键词</label>
+        <input id="fltStudentKw" class="form-control form-control-sm" placeholder="账号/ID包含即可">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">开始时间</label>
+        <input id="fltStart" type="datetime-local" class="form-control form-control-sm">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">结束时间</label>
+        <input id="fltEnd" type="datetime-local" class="form-control form-control-sm">
+      </div>
+      <div class="col-12 col-md-1 d-grid">
+        <button type="button" class="btn btn-sm btn-outline-primary" id="fltApply">筛选</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card card-soft border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">时间</th>
+            <th>学生</th>
+            <th>风险类型</th>
+            <th>心率/血氧</th>
+            <th>位置摘要</th>
+            <th>状态</th>
+            <th class="pe-3">操作</th>
+          </tr>
+        </thead>
+        <tbody id="aiRiskRows">
+          <tr><td colspan="7" class="text-center text-muted py-4">加载中…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+  async function apiGet(url) {
+    const r = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.message || "请求失败");
+    return d;
+  }
+  async function apiPost(url, body) {
+    const r = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.message || "请求失败");
+    return d;
+  }
+  function riskTypeText(t) {
+    if (t === "heart_abnormal") return "心率异常";
+    if (t === "wearable_health_ai") return "手环健康AI研判";
+    if (t === "band_removed_or_offline") return "手环摘除/离线";
+    if (t === "blindspot_linger") return "盲区滞留";
+    if (t === "blindspot_multisensor") return "盲区+多设备佐证";
+    if (t === "band_offline_multisensor") return "离线/摘除+多设备佐证";
+    return t || "—";
+  }
+  function bindButtons() {
+    document.querySelectorAll("[data-collab-trigger]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-collab-trigger");
+        if (!id) return;
+        const old = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "联动中…";
+        try {
+          await apiPost(`/api/admin/student-ai/risks/${encodeURIComponent(id)}/collab-trigger`, {});
+          btn.textContent = "已联动";
+          await loadRisks();
+        } catch (e) {
+          btn.disabled = false;
+          btn.textContent = old || "触发盲区协同";
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-risk-detail]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-risk-detail");
+        if (!id) return;
+        await openDetailDrawer(id);
+      });
+    });
+  }
+
+  let _currentRiskId = null;
+  async function openDetailDrawer(riskId) {
+    _currentRiskId = String(riskId);
+    const meta = document.getElementById("aiRiskDetailMeta");
+    const base = document.getElementById("aiRiskDetailBase");
+    const device = document.getElementById("aiRiskDetailDevice");
+    const collab = document.getElementById("aiRiskDetailCollab");
+    const st = document.getElementById("aiRiskDetailStatus");
+    const toSt = document.getElementById("aiRiskDetailToStatus");
+    const hint = document.getElementById("aiRiskDetailHint");
+    if (meta) meta.textContent = "加载中…";
+    if (base) base.textContent = "—";
+    if (device) device.textContent = "—";
+    if (collab) collab.textContent = "—";
+    if (hint) hint.textContent = "—";
+
+    const off = document.getElementById("aiRiskDetailDrawer");
+    const inst = bootstrap.Offcanvas.getOrCreateInstance(off);
+    inst.show();
+
+    let item = null;
+    try {
+      const d = await apiGet(`/api/admin/student-ai/risks/${encodeURIComponent(_currentRiskId)}`);
+      item = d.item || {};
+      const ds = d.device_status || {};
+      if (meta) meta.textContent = `ID ${_currentRiskId} · ${esc(item.created_at || "—")} · 学生 ${esc(item.student_username || "—")}`;
+      if (st) {
+        st.textContent = esc(item.status || "open");
+        st.className = "badge " + (String(item.status) === "open" ? "text-bg-warning" : "text-bg-secondary");
+      }
+      if (toSt) toSt.value = String(item.status || "open");
+      if (base) {
+        const loc = [item.ble_zone_text || "", item.gps_coarse_place || ""].filter(Boolean).join(" / ") || "—";
+        const det = item.details && typeof item.details === "object" ? item.details : {};
+        const adm = det.analysis_for_admin ? String(det.analysis_for_admin) : "";
+        const src = det.source ? ` · 来源：${esc(String(det.source))}` : "";
+        base.innerHTML =
+          `风险类型：<strong>${esc(riskTypeText(item.risk_type))}</strong><br>` +
+          `心率/血氧：<strong>${esc(String(item.heart_rate == null ? "—" : item.heart_rate))}</strong> / <strong>${esc(String(item.spo2 == null ? "—" : item.spo2))}</strong><br>` +
+          `位置摘要：<strong>${esc(loc)}</strong>` +
+          (adm ? `<br><span class="text-muted small">管理员研判摘要</span><br><strong class="small">${esc(adm)}</strong>` : "") +
+          (src ? `<br><span class="small text-muted">${src}</span>` : "");
+      }
+      if (device) {
+        const h = ds.heart || {};
+        const b = ds.ble || {};
+        const g = ds.gps || {};
+        const gp = g.coarse_place ? ` · 粗略地点：${esc(g.coarse_place)}` : "";
+        device.innerHTML =
+          `心率：${esc(String(h.heart_rate == null ? "—" : h.heart_rate))} bpm · 血氧：${esc(String(h.spo2 == null ? "—" : h.spo2))}% · 更新：${esc(h.measured_at || "—")}<br>` +
+          `BLE：${esc(b.status_text || "—")} · 区域：${esc(b.zone_text || "—")} · 更新：${esc(b.timestamp || "—")}<br>` +
+          `GPS：${esc(g.status_text || "—")} · 更新：${esc(g.timestamp || "—")}${gp}`;
+      }
+    } catch (e) {
+      if (meta) meta.textContent = "加载失败：" + (e.message || "未知错误");
+    }
+
+    // 联动记录（脱敏）
+    try {
+      const d2 = await apiGet(`/api/admin/student-ai/risks/${encodeURIComponent(_currentRiskId)}/collab`);
+      const items = Array.isArray(d2.items) ? d2.items : [];
+      if (!items.length) {
+        if (collab) collab.textContent = "暂无联动记录";
+      } else {
+        if (collab) {
+          collab.innerHTML = items
+            .slice(0, 10)
+            .map((x) => {
+              const cp = x.coarse_place ? ` · 粗略定位：${esc(x.coarse_place)}` : "";
+              return (
+                `<div class="rounded-3 border p-2 mb-2 bg-white">` +
+                `<div class="small text-muted">时间：${esc(x.created_at || "—")} · 触发：${esc(x.trigger_mode || "admin_manual")}${cp}</div>` +
+                `<div class="small">摄像头：${esc(x.camera_summary || "—")}</div>` +
+                `<div class="small">密度：${esc(x.crowd_summary || "—")}</div>` +
+                `<div class="small">红外：${esc(x.infrared_summary || "—")}</div>` +
+                `<div class="small">语音：${esc(x.voice_summary || "—")}</div>` +
+                `</div>`
+              );
+            })
+            .join("");
+        }
+      }
+    } catch (e) {
+      if (collab) collab.textContent = "联动记录加载失败";
+    }
+  }
+
+  document.getElementById("aiRiskDetailSaveStatus")?.addEventListener("click", async () => {
+    const hint = document.getElementById("aiRiskDetailHint");
+    const toSt = document.getElementById("aiRiskDetailToStatus")?.value || "open";
+    const note = document.getElementById("aiRiskDetailNote")?.value || "";
+    if (!_currentRiskId) return;
+    const btn = document.getElementById("aiRiskDetailSaveStatus");
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "保存中…";
+    if (hint) hint.textContent = "提交中…";
+    try {
+      await apiPost(`/api/admin/student-ai/risks/${encodeURIComponent(_currentRiskId)}/status`, { status: toSt, note });
+      if (hint) hint.textContent = "已更新状态";
+      await loadRisks();
+      await openDetailDrawer(_currentRiskId);
+    } catch (e) {
+      if (hint) hint.textContent = "更新失败：" + (e.message || "未知错误");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old || "保存状态";
+    }
+  });
+  async function loadRisks() {
+    const tb = document.getElementById("aiRiskRows");
+    if (!tb) return;
+    const status = document.getElementById("fltStatus")?.value || "";
+    const risk_type = document.getElementById("fltType")?.value || "";
+    const student_kw = document.getElementById("fltStudentKw")?.value || "";
+    const start_time = document.getElementById("fltStart")?.value || "";
+    const end_time = document.getElementById("fltEnd")?.value || "";
+    const qs =
+      `limit=80` +
+      (status ? `&status=${encodeURIComponent(status)}` : "") +
+      (risk_type ? `&risk_type=${encodeURIComponent(risk_type)}` : "") +
+      (student_kw ? `&student_kw=${encodeURIComponent(student_kw)}` : "") +
+      (start_time ? `&start_time=${encodeURIComponent(start_time)}` : "") +
+      (end_time ? `&end_time=${encodeURIComponent(end_time)}` : "");
+    const d = await apiGet("/api/admin/student-ai/risks?" + qs);
+    const items = Array.isArray(d.items) ? d.items : [];
+    if (!items.length) {
+      tb.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">暂无高危记录</td></tr>';
+      return;
+    }
+    tb.innerHTML = items
+      .map((x) => {
+        const hr = x.heart_rate == null ? "—" : x.heart_rate;
+        const sp = x.spo2 == null ? "—" : x.spo2;
+        const loc = [x.ble_zone_text || "", x.gps_coarse_place || ""].filter(Boolean).join(" / ") || "—";
+        const flags = [];
+        if (Number(x.is_band_offline || 0) === 1) flags.push("离线");
+        if (Number(x.is_band_removed_suspected || 0) === 1) flags.push("疑似摘除");
+        if (Number(x.is_blindspot || 0) === 1) flags.push("盲区");
+        return `<tr>
+          <td class="ps-3 small text-muted">${esc(x.created_at || "—")}</td>
+          <td>${esc(x.student_username || "—")}</td>
+          <td><span class="badge text-bg-danger">${esc(riskTypeText(x.risk_type))}</span></td>
+          <td class="small">${esc(String(hr))} / ${esc(String(sp))}</td>
+          <td class="small">${esc(loc)}${flags.length ? `<div class="text-muted">[${esc(flags.join("、"))}]</div>` : ""}</td>
+          <td><span class="badge ${String(x.status || "") === "open" ? "text-bg-warning" : "text-bg-secondary"}">${esc(x.status || "open")}</span></td>
+          <td class="pe-3">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-risk-detail="${esc(x.id)}">详情</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" data-collab-trigger="${esc(x.id)}">触发盲区协同</button>
+            <span class="small text-muted ms-1">联动${esc(String(x.collab_count || 0))}次</span>
+          </td>
+        </tr>`;
+      })
+      .join("");
+    bindButtons();
+  }
+  document.getElementById("aiRiskRefreshBtn")?.addEventListener("click", () => {
+    loadRisks().catch(() => {});
+  });
+  document.getElementById("fltApply")?.addEventListener("click", () => {
+    loadRisks().catch(() => {});
+  });
+
+  // 配置面板
+  async function loadCfg() {
+    const d = await apiGet("/api/admin/student-ai/config");
+    const c = d.config || {};
+    const set = (id, v) => { const n = document.getElementById(id); if (n && v != null) n.value = String(v); };
+    set("cfgHrMin", c.hr_min);
+    set("cfgHrMax", c.hr_max);
+    set("cfgSpo2Min", c.spo2_min);
+    set("cfgBleStale", c.ble_stale_min);
+    set("cfgGpsStale", c.gps_stale_min);
+    set("cfgHeartStale", c.heart_stale_min);
+    set("cfgBlindKw", c.blindspot_keywords);
+    set("cfgBlindLinger", c.blindspot_linger_min);
+    set("cfgDedupe", c.dedupe_min);
+    set("cfgMultiWin", c.multi_signal_window_min);
+    set("cfgMultiMin", c.multi_signal_min_count);
+  }
+  document.getElementById("aiCfgToggleBtn")?.addEventListener("click", async () => {
+    const card = document.getElementById("aiCfgCard");
+    if (!card) return;
+    const opening = card.classList.contains("d-none");
+    card.classList.toggle("d-none");
+    if (opening) {
+      loadCfg().catch(() => {});
+    }
+  });
+  document.getElementById("aiCfgSaveBtn")?.addEventListener("click", async () => {
+    const hint = document.getElementById("aiCfgHint");
+    const cfg = {
+      hr_min: document.getElementById("cfgHrMin")?.value,
+      hr_max: document.getElementById("cfgHrMax")?.value,
+      spo2_min: document.getElementById("cfgSpo2Min")?.value,
+      ble_stale_min: document.getElementById("cfgBleStale")?.value,
+      gps_stale_min: document.getElementById("cfgGpsStale")?.value,
+      heart_stale_min: document.getElementById("cfgHeartStale")?.value,
+      blindspot_keywords: document.getElementById("cfgBlindKw")?.value,
+      blindspot_linger_min: document.getElementById("cfgBlindLinger")?.value,
+      dedupe_min: document.getElementById("cfgDedupe")?.value,
+      multi_signal_window_min: document.getElementById("cfgMultiWin")?.value,
+      multi_signal_min_count: document.getElementById("cfgMultiMin")?.value,
+    };
+    try {
+      const out = await apiPost("/api/admin/student-ai/config", { config: cfg });
+      if (hint) hint.textContent = "已保存：" + Object.keys(out.applied || {}).join("、");
+    } catch (e) {
+      if (hint) hint.textContent = "保存失败：" + (e.message || "未知错误");
+    }
+  });
+  document.getElementById("aiRiskScanBtn")?.addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const hint = document.getElementById("aiRiskHint");
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "扫描中…";
+    if (hint) hint.textContent = "AI规则研判执行中…";
+    try {
+      const out = await apiPost("/api/admin/student-ai/scan", {});
+      if (hint) hint.textContent = `完成：新增 ${out.created_count || 0} 条高危日志`;
+      await loadRisks();
+    } catch (err) {
+      if (hint) hint.textContent = `扫描失败：${err.message || "未知错误"}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old || "执行研判扫描";
+    }
+  });
+  loadRisks().catch(() => {});
+})();
+</script>
+
+<!-- 详情抽屉（仅管理员可见/可用） -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="aiRiskDetailDrawer" aria-labelledby="aiRiskDetailDrawerTitle">
+  <div class="offcanvas-header">
+    <h2 class="offcanvas-title h6 fw-bold" id="aiRiskDetailDrawerTitle">研判详情</h2>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="关闭"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="small text-muted mb-2" id="aiRiskDetailMeta">—</div>
+
+    <div class="card card-soft border-0 shadow-sm mb-3">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-semibold">基础信息</div>
+          <span class="badge text-bg-warning" id="aiRiskDetailStatus">open</span>
+        </div>
+        <div class="small text-muted" id="aiRiskDetailBase">—</div>
+      </div>
+    </div>
+
+    <div class="card card-soft border-0 shadow-sm mb-3">
+      <div class="card-body p-3">
+        <div class="fw-semibold mb-2">设备状态（脱敏）</div>
+        <div class="small text-muted" id="aiRiskDetailDevice">—</div>
+      </div>
+    </div>
+
+    <div class="card card-soft border-0 shadow-sm mb-3">
+      <div class="card-body p-3">
+        <div class="fw-semibold mb-2">盲区协同联动记录（脱敏）</div>
+        <div class="small text-muted" id="aiRiskDetailCollab">—</div>
+      </div>
+    </div>
+
+    <div class="card card-soft border-0 shadow-sm">
+      <div class="card-body p-3">
+        <div class="fw-semibold mb-2">状态更新（仅管理员）</div>
+        <div class="row g-2 align-items-end">
+          <div class="col-6">
+            <label class="form-label small text-muted mb-1">新状态</label>
+            <select id="aiRiskDetailToStatus" class="form-select form-select-sm">
+              <option value="open">open</option>
+              <option value="investigating">investigating</option>
+              <option value="resolved">resolved</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label small text-muted mb-1">备注（可选）</label>
+            <input id="aiRiskDetailNote" class="form-control form-control-sm" placeholder="记录处置要点（仅管理员可见）">
+          </div>
+          <div class="col-12 d-grid">
+            <button type="button" class="btn btn-sm btn-primary" id="aiRiskDetailSaveStatus">保存状态</button>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted" id="aiRiskDetailHint">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

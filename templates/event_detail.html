@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}告警详情 #{{ event_id }} · 校园安全智能监测平台{% endblock %}
+{% block head_extra %}
+<style>
+  /* 事件详情页：左右列同高对齐，减少左侧留白 */
+  #event-detail-root .evd-top-row {
+    align-items: stretch;
+  }
+
+  #event-detail-root .evd-main-card {
+    min-height: 360px;
+  }
+
+  /* 右侧卡片统一一点间距与阴影层次 */
+  #event-detail-root .evd-side-card .card-body {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+  <a href="{{ url_for('events_page') }}" class="btn btn-sm btn-outline-secondary rounded-pill">← 返回事件列表</a>
+  <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" onclick="window.print()">打印 / 另存为 PDF</button>
+</div>
+<div id="event-detail-root" data-event-id="{{ event_id }}">
+  <div id="event-detail-loading" class="text-center text-muted py-5">加载中…</div>
+  <div id="event-detail-error" class="alert alert-danger d-none"></div>
+  <div id="event-detail-body" class="d-none">
+    <div class="row g-3 mb-4 evd-top-row">
+      <div class="col-12 col-lg-8">
+        <div class="card card-soft border-0 shadow-sm evd-main-card">
+          <div class="card-body p-4">
+            <h1 class="h5 fw-bold text-events-title mb-3">事件 <span id="evd-id"></span></h1>
+            <div class="row g-2 small">
+              <div class="col-md-6"><span class="text-muted">时间</span> <span id="evd-time" class="fw-medium"></span></div>
+              <div class="col-md-6"><span class="text-muted">地点</span> <span id="evd-loc" class="fw-medium"></span></div>
+              <div class="col-md-6"><span class="text-muted">类型</span> <span id="evd-type"></span></div>
+              <div class="col-md-6"><span class="text-muted">风险</span> <span id="evd-risk"></span></div>
+              <div class="col-md-6"><span class="text-muted">状态</span> <span id="evd-status"></span></div>
+              <div class="col-md-6"><span class="text-muted">人数</span> <span id="evd-people"></span></div>
+            </div>
+            <hr class="my-4">
+            <h2 class="h6 text-primary">AI 告警解释</h2>
+            <p class="small text-body mb-3" id="evd-reason"></p>
+            <h2 class="h6 text-primary">处置建议</h2>
+            <p class="small text-muted mb-0" id="evd-suggest"></p>
+          </div>
+        </div>
+
+        <div class="card card-soft border-0 shadow-sm mt-3 evd-side-card">
+          <div class="card-header border-0 fw-semibold text-stat-title">处理记录</div>
+          <div class="card-body small text-muted">
+            <p class="mb-1">状态：<strong id="evd-status2"></strong></p>
+            <div id="evd-dispatch-summary" class="mb-2"></div>
+            <div id="evd-dispatch-list" class="border rounded-3 bg-white p-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4">
+        <div class="card card-soft border-0 shadow-sm mb-3 evd-side-card">
+          <div class="card-header border-0 fw-semibold text-stat-title">关联传感器上报</div>
+          <div class="card-body small">
+            <div id="evd-sensor-viz" class="mb-2"></div>
+            <details class="user-select-none">
+              <summary class="text-muted">查看原始上报 JSON（追溯用）</summary>
+              <pre id="evd-sensor" class="bg-light rounded-3 p-3 mb-0 mt-2 text-wrap" style="font-size:0.75rem;max-height:280px;overflow:auto"></pre>
+            </details>
+          </div>
+        </div>
+        <div id="evd-evidence-card" class="card card-soft border-0 shadow-sm mb-3 d-none evd-side-card">
+          <div class="card-header border-0 fw-semibold text-stat-title d-flex justify-content-between align-items-center">
+            <span>隐私脱敏证据</span>
+            <span class="badge rounded-pill bg-success bg-opacity-10 text-success small">已脱敏</span>
+          </div>
+          <div class="card-body small">
+            <div id="evd-evidence-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h2 class="h6 fw-bold text-stat-title mb-3">关联监控画面</h2>
+    <p class="text-muted small mb-2">以下为平台已配置的取流地址（可与事发地点人工对照）。</p>
+    <div id="evd-cams" class="row g-3"></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>window.PAGE_TYPE = "event_detail";</script>
+{% endblock %}
